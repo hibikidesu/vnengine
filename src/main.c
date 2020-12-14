@@ -3,6 +3,7 @@
 #include <string.h>
 #include "engine/engine.h"
 #include "fs/fs.h"
+#include "fs/archive.h"
 
 EngineConfig *createConfig(char *title, int width, int height, char *scriptPath) {
     EngineConfig *config = malloc(sizeof(EngineConfig));
@@ -24,6 +25,8 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
+    archive_Read("Makefile", none);
+
     // Create config
     EngineConfig *config = createConfig("VNEngine", 1280, 720, "data/main.lua");
     if (config == NULL) {

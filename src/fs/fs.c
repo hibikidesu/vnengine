@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include "fs.h"
 
 char *fs_ReadFile(char *filePath, int *status) {
     char *buffer = NULL;
-    long length;
+    uint64_t length;
     FILE *file = fopen(filePath, "r");
 
     if (file) {
@@ -20,6 +21,7 @@ char *fs_ReadFile(char *filePath, int *status) {
             fread(buffer, 1, length, file);
         }
         fclose(file);
+        *status = 0;
     } else {
         *status = 1;
     }
