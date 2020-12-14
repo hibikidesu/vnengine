@@ -6,6 +6,7 @@
 #ifndef ARCHIVE_MAX_PATH_LENGTH
 #define ARCHIVE_MAX_PATH_LENGTH 256
 #endif
+#define ARCHIVE_MAGIC "baka"
 
 typedef enum {
     none        = 0x01,
@@ -19,12 +20,13 @@ typedef struct {
     char *contents;
 } ArchiveFile;
 typedef struct {
-    char magic[4];
+    char magic[5];
     char flags;
     uint64_t file_count;
     ArchiveFile *files[];
 } Archive;
 
 Archive *archive_Read(char *archivePath, ArchiveFlags flags);
+void archive_Create(char *path, int fileCount, char *files[], ArchiveFlags flags);
 
 #endif

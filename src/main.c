@@ -25,7 +25,8 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
-    archive_Read("Makefile", none);
+    // archive_Read("Makefile", none);
+    archive_Create("out.dat", 2, NULL, none);
 
     // Create config
     EngineConfig *config = createConfig("VNEngine", 1280, 720, "data/main.lua");
