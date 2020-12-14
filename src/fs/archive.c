@@ -50,22 +50,21 @@ Archive *archive_Read(char *archivePath, ArchiveFlags flags) {
     return archive;
 }
 
-void archive_Create(char *path, int fileCount, char *files[], ArchiveFlags flags) {
+void archive_Create(char *path, uint64_t fileCount, char *files[], ArchiveFlags flags) {
     FILE *file = NULL;
-    Archive *archive = malloc(sizeof(Archive));
-    strncpy(archive->magic, ARCHIVE_MAGIC, 5);
-    archive -> flags = flags;
-    archive -> file_count = fileCount;
 
     // Open file
     file = fopen(path, "wb");
     if (file) {
-        fwrite(archive, sizeof(archive), 1, file);
+        // Write magic
+        fwrite(ARCHIVE_MAGIC, sizeof(ARCHIVE_MAGIC), 1, file);
+        // Write flags
+        fwrite(&flags, sizeof(flags), 1, file);
+        // Write file_count
+        fwrite(&fileCount, sizeof(fileCount), 1, file);
         fclose(file);
     } else {
         fprintf(stderr, "Failed to open file\n");
         fclose(file);
     }
-    
-    free(archive);
 }

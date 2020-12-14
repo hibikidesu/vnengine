@@ -23,10 +23,10 @@ typedef struct {
     char magic[5];
     char flags;
     uint64_t file_count;
-    ArchiveFile *files[];
+    ArchiveFile **files;
 } Archive;
 
 Archive *archive_Read(char *archivePath, ArchiveFlags flags);
-void archive_Create(char *path, int fileCount, char *files[], ArchiveFlags flags);
+void archive_Create(char *path, uint64_t fileCount, char *files[], ArchiveFlags flags);
 
 #endif
