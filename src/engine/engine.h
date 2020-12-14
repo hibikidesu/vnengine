@@ -5,7 +5,7 @@ typedef struct {
     char title[64];
     int width;
     int height;
-    char startScript[128];
+    char *script;
 } EngineConfig;
 
 int engine_Init(EngineConfig *config);

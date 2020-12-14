@@ -13,7 +13,7 @@ int engine_Init(EngineConfig *config) {
     }
 
     // Init script
-    if ((status = script_Init())) {
+    if ((status = script_Init(config->script))) {
         return status;
     }
 

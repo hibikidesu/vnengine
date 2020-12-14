@@ -6,7 +6,9 @@
 
 static lua_State *g_State = NULL;
 
-int script_Init() {
+int script_Init(const char *script) {
+    int status = 0;
+
     // Create state
     g_State = luaL_newstate();
     if (g_State == NULL) {
@@ -16,9 +18,19 @@ int script_Init() {
 
     // Load libs
     luaL_openlibs(g_State);
+    
+    // Load string
+    status = luaL_loadstring(g_State, script);
+
+    // Run script
+    if (lua_pcall(g_State, 0, 0, 0)) {
+        fprintf(stderr, "Failed to run main script: %s\n", lua_tostring(g_State, -1));
+        return status;
+    }
+
     return 0;
 }
 
 void script_Free() {
-
+    lua_close(g_State);
 }
