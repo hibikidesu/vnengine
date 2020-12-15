@@ -27,6 +27,6 @@ typedef struct {
 } Archive;
 
 Archive *archive_Read(char *archivePath, ArchiveFlags flags);
-void archive_Create(char *path, uint64_t fileCount, char *files[], ArchiveFlags flags);
+void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, ArchiveFlags flags);
 
 #endif

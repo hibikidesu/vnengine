@@ -4,9 +4,8 @@
 #include <stdint.h>
 #include "fs.h"
 
-char *fs_ReadFile(char *filePath, int *status) {
-    char *buffer = NULL;
-    uint64_t length;
+uint64_t fs_ReadFile(char *filePath, char **contents) {
+    uint64_t length = 0;
     FILE *file = fopen(filePath, "r");
 
     if (file) {
@@ -16,15 +15,12 @@ char *fs_ReadFile(char *filePath, int *status) {
 
         // Back to beginning of file
         fseek(file, 0, SEEK_SET);
-        buffer = malloc(length);
-        if (buffer) {
-            fread(buffer, 1, length, file);
+        *contents = malloc(sizeof(char) * length);
+        if (*contents != NULL) {
+            fread(*contents, 1, length, file);
         }
         fclose(file);
-        *status = 0;
-    } else {
-        *status = 1;
     }
 
-    return buffer;
+    return length;
 }

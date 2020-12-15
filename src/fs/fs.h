@@ -1,6 +1,8 @@
 #ifndef VNENGINE_FS
 #define VNENGINE_FS
 
-char *fs_ReadFile(char *filePath, int *status);
+#include <stdint.h>
+
+uint64_t fs_ReadFile(char *filePath, char **contents);
 
 #endif

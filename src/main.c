@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include "engine/engine.h"
 #include "fs/fs.h"
@@ -12,21 +13,25 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
     config -> height = height;
 
     // Load script
-    int status = 0;
-    char *script = fs_ReadFile(scriptPath, &status);
-    if (status) {
+    char *buffer = NULL;
+    uint64_t length = fs_ReadFile(scriptPath, &buffer);
+    if (length == 0) {
         fprintf(stderr, "Failed to read main script file\n");
         free(config);
         return NULL;
     }
-    config -> script = script;
+    config -> script = buffer;
 
     return config;
 }
 
 int main(int argc, char *argv[]) {
-    // archive_Read("Makefile", none);
-    archive_Create("out.dat", 2, NULL, none);
+    // ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
+    // files[0] = malloc(sizeof(ArchiveFile));
+    // archive_Create("out.dat", 1, files, none);
+    // free(files[0]);
+    // free(files);
+    // return 0;
 
     // Create config
     EngineConfig *config = createConfig("VNEngine", 1280, 720, "data/main.lua");

@@ -50,7 +50,7 @@ Archive *archive_Read(char *archivePath, ArchiveFlags flags) {
     return archive;
 }
 
-void archive_Create(char *path, uint64_t fileCount, char *files[], ArchiveFlags flags) {
+void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, ArchiveFlags flags) {
     FILE *file = NULL;
 
     // Open file
@@ -58,10 +58,20 @@ void archive_Create(char *path, uint64_t fileCount, char *files[], ArchiveFlags 
     if (file) {
         // Write magic
         fwrite(ARCHIVE_MAGIC, sizeof(ARCHIVE_MAGIC), 1, file);
+
         // Write flags
         fwrite(&flags, sizeof(flags), 1, file);
+
         // Write file_count
         fwrite(&fileCount, sizeof(fileCount), 1, file);
+
+        // Write ptrs
+        int i;
+        uint64_t ptr = sizeof(ARCHIVE_MAGIC) + sizeof(flags) + sizeof(fileCount) + (fileCount * sizeof(uint64_t));
+        for (i = 0; i < fileCount; i++) {
+            fwrite(&ptr, sizeof(uint64_t), 1, file);
+        }
+
         fclose(file);
     } else {
         fprintf(stderr, "Failed to open file\n");
