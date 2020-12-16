@@ -26,12 +26,20 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
-    // ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
-    // files[0] = malloc(sizeof(ArchiveFile));
-    // archive_Create("out.dat", 1, files, none);
-    // free(files[0]);
-    // free(files);
-    // return 0;
+    ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
+    files[0] = malloc(sizeof(ArchiveFile));
+    
+    // Read file
+    char *buf = NULL;
+    uint64_t len = fs_ReadFile("Makefile", &buf);
+
+    files[0] -> contents = buf;
+    files[0] -> size = len;
+
+    archive_Create("out.dat", 1, files, none);
+    free(files[0]);
+    free(files);
+    return 0;
 
     // Create config
     EngineConfig *config = createConfig("VNEngine", 1280, 720, "data/main.lua");

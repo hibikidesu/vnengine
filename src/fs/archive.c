@@ -67,9 +67,20 @@ void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, Archive
 
         // Write ptrs
         int i;
+        uint64_t lastPtr;
         uint64_t ptr = sizeof(ARCHIVE_MAGIC) + sizeof(flags) + sizeof(fileCount) + (fileCount * sizeof(uint64_t));
         for (i = 0; i < fileCount; i++) {
             fwrite(&ptr, sizeof(uint64_t), 1, file);
+            // Save position of current table addr
+            lastPtr = ftell(file);
+            // Write file at addr
+            printf("Writing @ 0x%lx\n", ptr);
+            fseek(file, ptr, SEEK_SET);
+            fwrite(files[i]->contents, files[i]->size, 1, file);
+            // Increase ptr new location by file size
+            ptr += files[i] -> size;
+            // Go back to ptr table
+            fseek(file, lastPtr, SEEK_CUR);
         }
 
         fclose(file);
