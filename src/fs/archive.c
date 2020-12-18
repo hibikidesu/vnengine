@@ -2,7 +2,53 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <zlib.h>
 #include "archive.h"
+
+// Avoid corruption on win systems.
+#if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
+#  include <fcntl.h>
+#  include <io.h>
+#  define SET_BINARY_MODE(file) setmode(fileno(file), O_BINARY)
+#else
+#  define SET_BINARY_MODE(file)
+#endif
+
+// 256k
+#define ZLIB_CHUNK 262144
+
+void compressFile(char *path) {
+    FILE *file;
+    int ret, flush;
+    unsigned have;
+    z_stream strm;
+    unsigned char in[ZLIB_CHUNK];
+    unsigned char out[ZLIB_CHUNK];
+
+    // Open file
+    file = fopen(path, "rb");
+    if (file == NULL) {
+        fprintf(stderr, "%s: Failed to open file\n", __FUNCTION__);
+        fclose(file);
+        return;
+    }
+
+    // Allocate deflate state
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    ret = deflateInit(&strm, Z_BEST_COMPRESSION);
+    if (ret != Z_OK) {
+        fprintf(stderr, "Failed to deflateInit\n");
+        fclose(file);
+        return;
+    }
+
+    // Compress until EOF
+    //do {
+    //    strm.avail_in = fread(in, 1, ZLIB_CHUNK, source);
+    //}
+}
 
 Archive *archive_Read(char *archivePath, ArchiveFlags flags) {
     return NULL;
@@ -58,5 +104,21 @@ void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, Archive
     } else {
         fprintf(stderr, "Failed to open file\n");
         fclose(file);
+        return;
+    }
+
+    // Read flags
+    // Check if compression needed else if compression needed
+    switch (flags)
+    {
+        case compressed:
+            compressFile(path);
+            break;
+        
+        case encrypted:
+            break;
+
+        default:
+            break;
     }
 }

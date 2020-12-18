@@ -9,9 +9,9 @@
 #define ARCHIVE_MAGIC "baka"
 
 typedef enum {
-    none        = 0x01,
-    compressed  = 0x02,
-    encrypted   = 0x04
+    none,
+    compressed,
+    encrypted
 } ArchiveFlags;
 
 typedef struct {

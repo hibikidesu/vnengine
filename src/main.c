@@ -5,6 +5,7 @@
 #include "engine/engine.h"
 #include "fs/fs.h"
 #include "fs/archive.h"
+#include "logger.h"
 
 EngineConfig *createConfig(char *title, int width, int height, char *scriptPath) {
     EngineConfig *config = malloc(sizeof(EngineConfig));
@@ -26,6 +27,7 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
+    log_Log("TEST", "baka u");
     ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
     files[0] = malloc(sizeof(ArchiveFile));
     files[1] = malloc(sizeof(ArchiveFile));
@@ -44,7 +46,7 @@ int main(int argc, char *argv[]) {
     files[1] -> size = strlen(x) + 1;
     strcpy(files[1]->path, "/sex");
 
-    archive_Create("out.dat", 2, files, none);
+    archive_Create("out.dat", 2, files, compressed);
     free(files[0]->contents);
     free(files[0]);
     free(files[1]->contents);
