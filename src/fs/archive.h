@@ -20,8 +20,6 @@ typedef struct {
     char *contents;
 } ArchiveFile;
 typedef struct {
-    char magic[5];
-    char flags;
     uint64_t file_count;
     ArchiveFile **files;
 } Archive;

@@ -54,6 +54,15 @@ int main(int argc, char *argv[]) {
 
     files = NULL;
     Archive *archive = archive_Read("compressed.dat");
+    if (archive == NULL) {
+        log_Info("Archive is null");
+    }
+    uint64_t i;
+    for (i = 0; i < archive->file_count; i++) {
+        free(archive->files[i]);
+    }
+    free(files);
+    free(archive);
     return 0;
 
     // Create config

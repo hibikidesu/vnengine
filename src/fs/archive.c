@@ -170,7 +170,6 @@ uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
 
 uint64_t readCompressed(FILE *file, int bufferSize, char **buffer) {
     int ret;
-    unsigned have;
     z_stream strm;
     unsigned char chunk_in[ZLIB_CHUNK];
     unsigned char chunk_out[ZLIB_CHUNK];
@@ -221,7 +220,7 @@ uint64_t readCompressed(FILE *file, int bufferSize, char **buffer) {
         } while (strm.avail_out == 0);
     } while (ret != Z_STREAM_END);
     (void)inflateEnd(&strm);
-    log_Debug("Compressed size: %ld", size);
+    log_Debug("Uncompressed size: %ld", size);
     return size;
 }
 
@@ -271,7 +270,6 @@ Archive *archive_Read(char *archivePath) {
     FILE *file = NULL;
     Archive *archive = NULL;
     uint64_t file_size;
-    uint64_t file_count;
     ArchiveFlags flags;
     char header[5];
     char *raw_data = NULL;
@@ -320,6 +318,20 @@ Archive *archive_Read(char *archivePath) {
         default:
             log_Debug("Reading archive");
             break;
+    }
+
+    archive = malloc(sizeof(Archive));
+    memcpy(&archive->file_count, raw_data, sizeof(archive->file_count));
+    log_Debug("File count: %ld", archive->file_count);
+
+    archive->files = malloc(sizeof(ArchiveFile) * archive->file_count);
+
+    uint64_t i;
+    for (i = 0; i < archive->file_count; i++) {
+        archive->files[i] = malloc(sizeof(ArchiveFile));
+        log_Debug("Size offset 0x%lx", (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)));
+        memcpy(&archive->files[i]->size, raw_data + (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)), sizeof(uint64_t));
+        log_Debug("Size: %ld", archive->files[i]->size);
     }
 
     free(raw_data);
