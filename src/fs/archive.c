@@ -20,6 +20,8 @@
 // 256k
 #define ZLIB_CHUNK 256 * 1024
 
+// Change in prod?
+#define RANDOM_POS(file_len) ((file_len + (4 - 1)) / 4) * 3
 static uint8_t ENCRYPTION_KEY[] = {
     0xD3, 0xA5, 0x2E, 0x61, 0x16, 0x29, 0x6E, 0xB4, 0x33, 0xF0, 0x9E, 0xBF, 0x6D, 0xCD, 0xD3, 0x92,
     0xFC, 0xC3, 0x53, 0x7E, 0x83, 0x70, 0xE1, 0x7C, 0xE2, 0x41, 0xAC, 0x39, 0x93, 0x43, 0x20, 0x6D 
@@ -85,7 +87,6 @@ void encryptFile(char *path) {
     file = fopen("vnengine", "rb");
     if (file == NULL) {
         log_Debug("%s: Failed to open file", __FUNCTION__);
-        fclose(file);
         return;
     }
 
@@ -94,9 +95,10 @@ void encryptFile(char *path) {
     file_length = ftell(file);
     
     // Seek to random part and read bytes
-    fseek(file, ((file_length + (4 - 1)) / 4) * 3, SEEK_SET);
+    fseek(file, RANDOM_POS(file_length), SEEK_SET);
     fread(&random_bytes, 1, 0x64 + AES_KEYLEN, file);
     fclose(file);
+    log_Debug("Offset %d", RANDOM_POS(file_length));
 
     // Create key
     int i;
@@ -108,17 +110,18 @@ void encryptFile(char *path) {
         }
         encryption_key[i] = c;
     }
+    log_Debug("Key starts with 0x%x ends with 0x%x", encryption_key[0], encryption_key[31]);
 
     // Create iv
     for (i = 0; i < 16; i++) {
         encryption_iv[i] = random_bytes[AES_KEYLEN + i];
     }
+    log_Debug("IV starts with 0x%x ends with 0x%x", encryption_iv[0], encryption_iv[15]);
 
     // Read file to encrypt
     file = fopen(path, "rb");
     if (file == NULL) {
         log_Error("Failed to open file");
-        fclose(file);
         return;
     }
 
@@ -175,7 +178,6 @@ void compressFile(char *path) {
     file = fopen(path, "rb");
     if (file == NULL) {
         log_Error("%s: Failed to open file", __FUNCTION__);
-        fclose(file);
         return;
     }
 
