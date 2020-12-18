@@ -4,7 +4,7 @@ STRIP		:= $(PREFIX)strip
 
 TARGET		:= vnengine
 DEBUG		:= 1
-CFLAGS		:= -Wall -std=c99 -O2 -DDEBUG=$(DEBUG)
+CFLAGS		:= -Wall -std=c99 -O2 -DDEBUG=$(DEBUG) -DCBC=1 -DCTR=1 -DECB=0 -DAES256=1
 ifeq ($(DEBUG), 1)
 CFLAGS += -ggdb3
 endif
