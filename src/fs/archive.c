@@ -27,53 +27,6 @@ static uint8_t ENCRYPTION_KEY[] = {
     0xFC, 0xC3, 0x53, 0x7E, 0x83, 0x70, 0xE1, 0x7C, 0xE2, 0x41, 0xAC, 0x39, 0x93, 0x43, 0x20, 0x6D 
 };
 
-uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
-    unsigned char chunk_in[ZLIB_CHUNK];
-    unsigned char chunk_out[ZLIB_CHUNK];
-    int ret, flush;
-    z_stream strm;
-    uint64_t size = 0;
-
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    ret = deflateInit(&strm, level);
-    if (ret != Z_OK) {
-        log_Error("Failed to deflateInit");
-        return size;
-    }
-    
-    // Compress until EOF
-    do {
-        strm.avail_in = fread(chunk_in, 1, ZLIB_CHUNK, file);
-        if (ferror(file)) {
-            (void)deflateEnd(&strm);
-            log_Error("%s: File stream error", __FUNCTION__);
-            return size;
-        }
-        flush = feof(file) ? Z_FINISH : Z_NO_FLUSH;
-        strm.next_in = chunk_in;
-        // run deflate() on input until output buffer not full, finish
-        // compression if all of source has been read in
-        do {
-            strm.avail_out = ZLIB_CHUNK;
-            strm.next_out = chunk_out;
-            ret = deflate(&strm, flush);
-            assert(ret != Z_STREAM_ERROR);
-            if (bufferSize != 0) {
-                log_Debug("%s: Writing %d bytes to buffer", __FUNCTION__, ZLIB_CHUNK - strm.avail_out);
-                memcpy(*buffer + size, chunk_out, ZLIB_CHUNK - strm.avail_out);
-            }
-            size += ZLIB_CHUNK - strm.avail_out;    
-        } while (strm.avail_out == 0);
-        assert(strm.avail_in == 0);
-    } while (flush != Z_FINISH);
-    assert(ret == Z_STREAM_END);
-    (void)deflateEnd(&strm);
-    log_Debug("Compressed size: %ld", size);
-    return size;
-}
-
 void encryptFile(char *path) {
     FILE *file = NULL;
     uint8_t *in_bytes = NULL;
@@ -168,6 +121,110 @@ void encryptFile(char *path) {
     free(in_bytes);
 }
 
+uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
+    unsigned char chunk_in[ZLIB_CHUNK];
+    unsigned char chunk_out[ZLIB_CHUNK];
+    int ret, flush;
+    z_stream strm;
+    uint64_t size = 0;
+
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    ret = deflateInit(&strm, level);
+    if (ret != Z_OK) {
+        log_Error("Failed to deflateInit");
+        return size;
+    }
+    
+    // Compress until EOF
+    do {
+        strm.avail_in = fread(chunk_in, 1, ZLIB_CHUNK, file);
+        if (ferror(file)) {
+            (void)deflateEnd(&strm);
+            log_Error("%s: File stream error", __FUNCTION__);
+            return size;
+        }
+        flush = feof(file) ? Z_FINISH : Z_NO_FLUSH;
+        strm.next_in = chunk_in;
+        // run deflate() on input until output buffer not full, finish
+        // compression if all of source has been read in
+        do {
+            strm.avail_out = ZLIB_CHUNK;
+            strm.next_out = chunk_out;
+            ret = deflate(&strm, flush);
+            assert(ret != Z_STREAM_ERROR);
+            if (bufferSize != 0) {
+                log_Debug("%s: Writing %d bytes to buffer", __FUNCTION__, ZLIB_CHUNK - strm.avail_out);
+                memcpy(*buffer + size, chunk_out, ZLIB_CHUNK - strm.avail_out);
+            }
+            size += ZLIB_CHUNK - strm.avail_out;    
+        } while (strm.avail_out == 0);
+        assert(strm.avail_in == 0);
+    } while (flush != Z_FINISH);
+    assert(ret == Z_STREAM_END);
+    (void)deflateEnd(&strm);
+    log_Debug("Compressed size: %ld", size);
+    return size;
+}
+
+uint64_t readCompressed(FILE *file, int bufferSize, char **buffer) {
+    int ret;
+    unsigned have;
+    z_stream strm;
+    unsigned char chunk_in[ZLIB_CHUNK];
+    unsigned char chunk_out[ZLIB_CHUNK];
+    uint64_t size = 0;
+    
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.avail_in = 0;
+    strm.next_in = Z_NULL;
+    ret = inflateInit(&strm);
+    if (ret != Z_OK) {
+        log_Error("Failed to inflateInit");
+        return size;
+    }
+
+    // Decompress until eof
+    do {
+        strm.avail_in = fread(chunk_in, 1, ZLIB_CHUNK, file);
+        if (ferror(file)) {
+            log_Error("File stream error");
+            (void)inflateEnd(&strm);
+            return size;
+        }
+        if (strm.avail_in == 0) {
+            break;
+        }
+        strm.next_in = chunk_in;
+        // run inflate() on input until output buffer not full
+        do {
+            strm.avail_out = ZLIB_CHUNK;
+            strm.next_out = chunk_out;
+            ret = inflate(&strm, Z_NO_FLUSH);
+            assert(ret != Z_STREAM_ERROR); 
+            switch (ret) {
+                case Z_NEED_DICT:
+                    ret = Z_DATA_ERROR;
+                case Z_DATA_ERROR:
+                case Z_MEM_ERROR:
+                    (void)inflateEnd(&strm);
+                    return size;
+            }
+            if (bufferSize != 0) {
+                log_Debug("%s: Writing %d bytes to buffer", __FUNCTION__, ZLIB_CHUNK - strm.avail_out);
+                memcpy(*buffer + size, chunk_out, ZLIB_CHUNK - strm.avail_out);
+            }
+            size += ZLIB_CHUNK - strm.avail_out;
+        } while (strm.avail_out == 0);
+    } while (ret != Z_STREAM_END);
+    (void)inflateEnd(&strm);
+    log_Debug("Compressed size: %ld", size);
+    return size;
+}
+
 void compressFile(char *path) {
     FILE *file = NULL;
     uint64_t compSize, outCheck;
@@ -210,8 +267,65 @@ void compressFile(char *path) {
     fclose(file);
 }
 
-Archive *archive_Read(char *archivePath, ArchiveFlags flags) {
-    return NULL;
+Archive *archive_Read(char *archivePath) {
+    FILE *file = NULL;
+    Archive *archive = NULL;
+    uint64_t file_size;
+    uint64_t file_count;
+    ArchiveFlags flags;
+    char header[5];
+    char *raw_data = NULL;
+
+    // Open file
+    file = fopen(archivePath, "rb");
+    if (file == NULL) {
+        log_Error("Failed to open archive path for reading");
+        return NULL;
+    }
+
+    // Read file size
+    fseek(file, 0L, SEEK_END);
+    file_size = ftell(file);
+    log_Debug("Archive Size: %ld", file_size);
+    if (file_size < 12) {
+        log_Error("Archive too small");
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_SET);
+
+    // Check header
+    fread(&header, 5, 1, file);
+    log_Debug("First byte of header 0x%x", (unsigned)(unsigned char)header[0]);
+    log_Debug("Header: %s", header);
+    if ((strncmp(header, "baka\0", 5)) != 0) {
+        log_Error("Invalid archive header");
+        fclose(file);
+        return NULL;
+    }
+
+    // Check flags
+    fread(&flags, sizeof(flags), 1, file);
+    switch (flags) { 
+        case compressed:
+            log_Debug("Reading compressed archive");
+            file_size = readCompressed(file, 0, NULL);
+            raw_data = malloc(file_size);
+            fseek(file, 9, SEEK_SET);
+            readCompressed(file, file_size, &raw_data);
+            break;
+        case encrypted:
+            log_Debug("Reading encrypted archive");
+            break;
+        default:
+            log_Debug("Reading archive");
+            break;
+    }
+
+    free(raw_data);
+    fclose(file);
+
+    return archive;
 }
 
 void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, ArchiveFlags flags) {

@@ -27,7 +27,7 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
-    ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
+    ArchiveFile **files = malloc(sizeof(ArchiveFile) * 2);
     files[0] = malloc(sizeof(ArchiveFile));
     files[1] = malloc(sizeof(ArchiveFile));
 
@@ -45,12 +45,15 @@ int main(int argc, char *argv[]) {
     files[1] -> size = strlen(x) + 1;
     strcpy(files[1]->path, "/sex");
 
-    archive_Create("encrypted.dat", 2, files, encrypted);
+    archive_Create("encrypted.dat", 2, files, compressed);
     free(files[0]->contents);
     free(files[0]);
     free(files[1]->contents);
     free(files[1]);
     free(files);
+
+    files = NULL;
+    Archive *archive = archive_Read("compressed.dat");
     return 0;
 
     // Create config
