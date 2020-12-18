@@ -326,12 +326,23 @@ Archive *archive_Read(char *archivePath) {
 
     archive->files = malloc(sizeof(ArchiveFile) * archive->file_count);
 
+    uint64_t faddr;
     uint64_t i;
     for (i = 0; i < archive->file_count; i++) {
+        // Create file
         archive->files[i] = malloc(sizeof(ArchiveFile));
+        // Get file size
         log_Debug("Size offset 0x%lx", (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)));
-        memcpy(&archive->files[i]->size, raw_data + (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)), sizeof(uint64_t));
+        memcpy(&archive->files[i]->size, raw_data + sizeof(uint64_t) + (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)), sizeof(uint64_t));
         log_Debug("Size: %ld", archive->files[i]->size);
+        // Get file address and read contents
+        archive->files[i]->contents = malloc(archive->files[i]->size);
+        memcpy(&faddr, raw_data + (sizeof(uint64_t) * (i + 1)), sizeof(faddr));
+        log_Debug("File Address 0x%lx", faddr - 9);
+        memcpy(archive->files[i]->contents, raw_data + (sizeof(uint64_t) * i) - 9, archive->files[i]->size);
+        // Write path
+        strncpy(archive->files[i]->path, raw_data + sizeof(uint64_t) + ((sizeof(uint64_t) * archive->file_count) * 2) + (ARCHIVE_MAX_PATH_LENGTH * i), ARCHIVE_MAX_PATH_LENGTH - 1);
+        log_Debug("Path %s", archive->files[i]->path);
     }
 
     free(raw_data);
