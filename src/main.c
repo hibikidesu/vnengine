@@ -17,7 +17,7 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
     char *buffer = NULL;
     uint64_t length = fs_ReadFile(scriptPath, &buffer);
     if (length == 0) {
-        fprintf(stderr, "Failed to read main script file\n");
+        log_Error("Failed to read main script file\n");
         free(config);
         return NULL;
     }
@@ -27,7 +27,6 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
-    log_Log("TEST", "baka u");
     ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
     files[0] = malloc(sizeof(ArchiveFile));
     files[1] = malloc(sizeof(ArchiveFile));
@@ -46,7 +45,7 @@ int main(int argc, char *argv[]) {
     files[1] -> size = strlen(x) + 1;
     strcpy(files[1]->path, "/sex");
 
-    archive_Create("out.dat", 2, files, compressed);
+    archive_Create("compressed.dat", 2, files, compressed);
     free(files[0]->contents);
     free(files[0]);
     free(files[1]->contents);

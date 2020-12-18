@@ -3,6 +3,7 @@
 #include "engine.h"
 #include "renderer.h"
 #include "script.h"
+#include "../logger.h"
 
 int engine_Init(EngineConfig *config) {
     int status = 0;
@@ -21,7 +22,7 @@ int engine_Init(EngineConfig *config) {
 }
 
 void engine_Free() {
-    printf("Engine shutting down\n");
+    log_Info("Engine shutting down");
     script_Free();
     renderer_Free();
 }

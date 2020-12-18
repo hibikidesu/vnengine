@@ -3,6 +3,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include "script.h"
+#include "../logger.h"
 
 static lua_State *g_State = NULL;
 
@@ -12,7 +13,7 @@ int script_Init(const char *script) {
     // Create state
     g_State = luaL_newstate();
     if (g_State == NULL) {
-        fprintf(stderr, "Failed to create lua state\n");
+        log_Error("Failed to create lua state");
         return 1;
     }
 
@@ -24,7 +25,7 @@ int script_Init(const char *script) {
 
     // Run script
     if (lua_pcall(g_State, 0, 0, 0)) {
-        fprintf(stderr, "Failed to run main script: %s\n", lua_tostring(g_State, -1));
+        log_Error("Failed to run main script: %s", lua_tostring(g_State, -1));
         return status;
     }
 
