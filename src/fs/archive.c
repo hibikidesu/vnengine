@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "archive.h"
 #include "../logger.h"
+#include "../utils/aes.h"
 
 // Avoid corruption on win systems.
 #if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
@@ -18,6 +19,11 @@
 
 // 256k
 #define ZLIB_CHUNK 256 * 1024
+
+static uint8_t ENCRYPTION_KEY[] = {
+    0xD3, 0xA5, 0x2E, 0x61, 0x16, 0x29, 0x6E, 0xB4, 0x33, 0xF0, 0x9E, 0xBF, 0x6D, 0xCD, 0xD3, 0x92,
+    0xFC, 0xC3, 0x53, 0x7E, 0x83, 0x70, 0xE1, 0x7C, 0xE2, 0x41, 0xAC, 0x39, 0x93, 0x43, 0x20, 0x6D 
+};
 
 uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
     unsigned char chunk_in[ZLIB_CHUNK];
@@ -66,8 +72,101 @@ uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
     return size;
 }
 
+void encryptFile(char *path) {
+    FILE *file = NULL;
+    uint8_t *in_bytes = NULL;
+    uint8_t encryption_key[AES_KEYLEN];
+    uint8_t encryption_iv[16];
+    uint8_t random_bytes[0x64 + AES_KEYLEN];
+    uint64_t file_length;
+    char header[9];
+
+    // Use bytes from binary as encryption key
+    file = fopen("vnengine", "rb");
+    if (file == NULL) {
+        log_Debug("%s: Failed to open file", __FUNCTION__);
+        fclose(file);
+        return;
+    }
+
+    // Get file length
+    fseek(file, 0L, SEEK_END);
+    file_length = ftell(file);
+    
+    // Seek to random part and read bytes
+    fseek(file, ((file_length + (4 - 1)) / 4) * 3, SEEK_SET);
+    fread(&random_bytes, 1, 0x64 + AES_KEYLEN, file);
+    fclose(file);
+
+    // Create key
+    int i;
+    uint8_t c;
+    for (i = 0; i < AES_KEYLEN; i++) {
+        c = ENCRYPTION_KEY[i];
+        if ((i % 2) == 0) {
+            c = random_bytes[i / 2] ^ ENCRYPTION_KEY[i];
+        }
+        encryption_key[i] = c;
+    }
+
+    // Create iv
+    for (i = 0; i < 16; i++) {
+        encryption_iv[i] = random_bytes[AES_KEYLEN + i];
+    }
+
+    // Read file to encrypt
+    file = fopen(path, "rb");
+    if (file == NULL) {
+        log_Error("Failed to open file");
+        fclose(file);
+        return;
+    }
+
+    // Get file length
+    fseek(file, 0L, SEEK_END);
+    file_length = ftell(file);
+    
+    // Go back
+    fseek(file, 0, SEEK_SET);
+    
+    // Read header, subtract length not encrypting
+    fread(&header, 1, 9, file);
+    file_length -= 9;
+
+    // Pad
+    for (i = 0; i < 32; i++) {
+        if ((file_length % 16) == 0) {
+            break;
+        }
+        file_length += 1;
+    }
+    log_Debug("File length: %ld", file_length);
+
+    // Read bytes
+    in_bytes = malloc(file_length);
+    fread(in_bytes, 1, file_length, file);
+    fclose(file);
+
+    // Encrypt
+    struct AES_ctx ctx;
+    AES_init_ctx_iv(&ctx, encryption_key, encryption_iv);
+    AES_CBC_encrypt_buffer(&ctx, in_bytes, file_length);
+
+    // Write to file
+    file = fopen(path, "wb");
+
+    // Write header
+    fwrite(&header, 9, 1, file);
+
+    // Write data
+    fwrite(in_bytes, file_length, 1, file);
+
+    fclose(file);
+    free(in_bytes);
+}
+
 void compressFile(char *path) {
-    FILE *file;
+    FILE *file = NULL;
     uint64_t compSize, outCheck;
     char *compressed = NULL;
     char header[9];
@@ -87,7 +186,7 @@ void compressFile(char *path) {
     // Seek back to beginning, after header
     fseek(file, 9, SEEK_SET);
 
-    // Create buffer based off compression size
+    // Create buffer based off compression size and recompress data again
     compressed = malloc(compSize);
     outCheck = _compressData(file, Z_BEST_COMPRESSION, compSize, &compressed);
     log_Debug("Out size %ld", outCheck, compSize);
@@ -175,6 +274,7 @@ void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, Archive
             break;
         
         case encrypted:
+            encryptFile(path);
             break;
 
         default:
