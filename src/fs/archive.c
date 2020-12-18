@@ -5,49 +5,7 @@
 #include "archive.h"
 
 Archive *archive_Read(char *archivePath, ArchiveFlags flags) {
-    Archive *archive = NULL;
-    FILE *file = NULL;
-    uint64_t length = 0;
-    char readMagic[5];
-
-    archive = malloc(sizeof(Archive));
-
-    // Read archive
-    file = fopen(archivePath, "rb");
-    if (file) {
-        // Check length
-        fseek(file, 0, SEEK_END);
-        length = ftell(file);
-        if (length < sizeof(Archive)) {
-            fprintf(stderr, "Archive too small\n");
-            free(archive);
-            fclose(file);
-            return NULL;
-        }
-
-        // Back to beginning of file
-        fseek(file, 0, SEEK_SET);
-
-        // Read magic
-        fread(readMagic, 1, 5, file);
-        if (strncmp(readMagic, ARCHIVE_MAGIC, 5) != 0) {
-            fprintf(stderr, "Archive magic does not match, found \"%s\"\n", readMagic);
-            free(archive);
-            fclose(file);
-            return NULL;
-        }
-        printf("match\n");
-
-        fclose(file);
-
-    } else {
-        fprintf(stderr, "Failed to open archive\n");
-        free(archive);
-        fclose(file);
-        return NULL;
-    }
-
-    return archive;
+    return NULL;
 }
 
 void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, ArchiveFlags flags) {
@@ -67,20 +25,33 @@ void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, Archive
 
         // Write ptrs
         int i;
-        uint64_t lastPtr;
-        uint64_t ptr = sizeof(ARCHIVE_MAGIC) + sizeof(flags) + sizeof(fileCount) + (fileCount * sizeof(uint64_t));
+        uint64_t fileTablePtr;
+        uint64_t headerSize =  sizeof(ARCHIVE_MAGIC) + sizeof(flags) + sizeof(fileCount);
+        uint64_t ptr = headerSize + ((fileCount * sizeof(uint64_t)) * 2) + (ARCHIVE_MAX_PATH_LENGTH * fileCount);
         for (i = 0; i < fileCount; i++) {
+            // FILE TABLE
+            // Write down the address of the file in the file table
             fwrite(&ptr, sizeof(uint64_t), 1, file);
             // Save position of current table addr
-            lastPtr = ftell(file);
+            fileTablePtr = ftell(file);
+
+            // SIZE TABLE
+            fseek(file, headerSize + (sizeof(uint64_t) * fileCount) + (i * sizeof(uint64_t)), SEEK_SET);
+            fwrite(&files[i]->size, sizeof(uint64_t), 1, file);
+
+            // PATH TABLE
+            fseek(file, headerSize + ((sizeof(uint64_t) * fileCount) * 2) + (i * ARCHIVE_MAX_PATH_LENGTH), SEEK_SET);
+            fwrite(&files[i]->path, sizeof(files[i]->path), 1, file);
+
+            // FILE SPACE
             // Write file at addr
-            printf("Writing @ 0x%lx\n", ptr);
             fseek(file, ptr, SEEK_SET);
             fwrite(files[i]->contents, files[i]->size, 1, file);
             // Increase ptr new location by file size
             ptr += files[i] -> size;
+
             // Go back to ptr table
-            fseek(file, lastPtr, SEEK_CUR);
+            fseek(file, fileTablePtr, SEEK_SET);
         }
 
         fclose(file);

@@ -28,16 +28,27 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 int main(int argc, char *argv[]) {
     ArchiveFile **files = malloc(sizeof(ArchiveFile) * 1);
     files[0] = malloc(sizeof(ArchiveFile));
-    
+    files[1] = malloc(sizeof(ArchiveFile));
+
     // Read file
     char *buf = NULL;
     uint64_t len = fs_ReadFile("Makefile", &buf);
 
     files[0] -> contents = buf;
     files[0] -> size = len;
+    strcpy(files[0]->path, "/Makefile");
 
-    archive_Create("out.dat", 1, files, none);
+    char *x = "baka u";
+    files[1] -> contents = malloc(strlen(x) + 1);
+    strncpy(files[1]->contents, x, strlen(x) + 1);
+    files[1] -> size = strlen(x) + 1;
+    strcpy(files[1]->path, "/sex");
+
+    archive_Create("out.dat", 2, files, none);
+    free(files[0]->contents);
     free(files[0]);
+    free(files[1]->contents);
+    free(files[1]);
     free(files);
     return 0;
 
