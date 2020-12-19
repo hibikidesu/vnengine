@@ -122,6 +122,10 @@ void encryptFile(char *path) {
     AES_init_ctx_iv(&ctx, encryption_key, encryption_iv);
     AES_CBC_encrypt_buffer(&ctx, in_bytes, file_length);
 
+    // Free keys
+    free(encryption_key);
+    free(encryption_iv);
+
     // Write to file
     file = fopen(path, "wb");
 
@@ -170,6 +174,8 @@ void readEncrypted(uint8_t *buffer, uint64_t length) {
     struct AES_ctx ctx;
     AES_init_ctx_iv(&ctx, encryption_key, encryption_iv);
     AES_CBC_decrypt_buffer(&ctx, buffer, length);
+    free(encryption_key);
+    free(encryption_iv);
 }
 
 uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
