@@ -54,16 +54,7 @@ int main(int argc, char *argv[]) {
 
     files = NULL;
     Archive *archive = archive_Read("encrypted.dat");
-    if (archive == NULL) {
-        log_Info("Archive is null");
-    }
-    uint64_t i;
-    for (i = 0; i < archive->file_count; i++) {
-        free(archive->files[i]->contents);
-        free(archive->files[i]);
-    }
-    free(files);
-    free(archive);
+    archive_Free(archive);
     return 0;
 
     // Create config

@@ -487,3 +487,17 @@ void archive_Create(char *path, uint64_t fileCount, ArchiveFile **files, Archive
             break;
     }
 }
+
+void archive_Free(Archive *archive) {
+    if (archive == NULL) {
+        return;
+    }
+    uint64_t i;
+    for (i = 0; i < archive->file_count; i++) {
+        free(archive->files[i]->contents);
+        free(archive->files[i]);
+    }
+    free(archive->files);
+    free(archive);
+    log_Debug("Archive freed");
+}
