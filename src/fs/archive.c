@@ -135,6 +135,43 @@ void encryptFile(char *path) {
     free(in_bytes);
 }
 
+void readEncrypted(uint8_t *buffer, uint64_t length) {
+    uint8_t *encryption_key = NULL;
+    uint8_t *encryption_iv = NULL;
+    uint8_t random_bytes[0x64 + AES_KEYLEN];
+    uint64_t file_length = 0;
+    FILE* file = NULL;
+
+    // Get random bytes
+    file = fopen("vnengine", "rb");
+    if (file == NULL) {
+        log_Debug("%s: Failed to open file", __FUNCTION__);
+        return;
+    }
+
+    // Get file length
+    fseek(file, 0L, SEEK_END);
+    file_length = ftell(file);
+    
+    // Seek to random part and read bytes
+    fseek(file, RANDOM_POS(file_length), SEEK_SET);
+    fread(&random_bytes, 1, 0x64 + AES_KEYLEN, file);
+    fclose(file);
+    log_Debug("Offset %d", RANDOM_POS(file_length));
+    log_Debug("Decryption length: %ld", length);
+
+    // Create key
+    encryption_key = create_Key(random_bytes);
+
+    // Create iv
+    encryption_iv = create_Iv(random_bytes);
+
+    // Decrypt
+    struct AES_ctx ctx;
+    AES_init_ctx_iv(&ctx, encryption_key, encryption_iv);
+    AES_CBC_decrypt_buffer(&ctx, buffer, length);
+}
+
 uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
     unsigned char chunk_in[ZLIB_CHUNK];
     unsigned char chunk_out[ZLIB_CHUNK];
@@ -182,7 +219,7 @@ uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
     return size;
 }
 
-uint64_t readCompressed(FILE *file, int bufferSize, char **buffer) {
+uint64_t readCompressed(FILE *file, int bufferSize, uint8_t **buffer) {
     int ret;
     z_stream strm;
     unsigned char chunk_in[ZLIB_CHUNK];
@@ -286,7 +323,7 @@ Archive *archive_Read(char *archivePath) {
     uint64_t file_size;
     ArchiveFlags flags;
     char header[5];
-    char *raw_data = NULL;
+    uint8_t *raw_data = NULL;
 
     // Open file
     file = fopen(archivePath, "rb");
@@ -328,6 +365,13 @@ Archive *archive_Read(char *archivePath) {
             break;
         case encrypted:
             log_Debug("Reading encrypted archive");
+            // First read into buffer
+            file_size -= 9;
+            raw_data = malloc(file_size);
+            fseek(file, 9, SEEK_SET);
+            fread(raw_data, file_size, 1, file);
+            // Then pass in to decrypt buffer
+            readEncrypted(raw_data, file_size);
             break;
         default:
             log_Debug("Reading archive");
