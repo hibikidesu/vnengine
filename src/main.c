@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     files[1] -> size = strlen(x) + 1;
     strcpy(files[1]->path, "/sex");
 
-    archive_Create("encrypted.dat", 2, files, compressed);
+    archive_Create("encrypted.dat", 2, files, encrypted);
     free(files[0]->contents);
     free(files[0]);
     free(files[1]->contents);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     free(files);
 
     files = NULL;
-    Archive *archive = archive_Read("compressed.dat");
+    Archive *archive = archive_Read("encrypted.dat");
     if (archive == NULL) {
         log_Info("Archive is null");
     }

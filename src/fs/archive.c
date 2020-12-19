@@ -27,11 +27,36 @@ static uint8_t ENCRYPTION_KEY[] = {
     0xFC, 0xC3, 0x53, 0x7E, 0x83, 0x70, 0xE1, 0x7C, 0xE2, 0x41, 0xAC, 0x39, 0x93, 0x43, 0x20, 0x6D 
 };
 
+uint8_t *create_Key(uint8_t *random_bytes) {
+    uint8_t *key = malloc(AES_BLOCKLEN);
+    uint8_t c;
+    int i;
+    for (i = 0; i < AES_KEYLEN; i++) {
+        c = ENCRYPTION_KEY[i];
+        if ((i % 2) == 0) {
+            c = random_bytes[i / 2] ^ ENCRYPTION_KEY[i];
+        }
+        key[i] = c;
+    }
+    log_Debug("Key starts with 0x%x ends with 0x%x", key[0], key[31]);
+    return key;
+}
+
+uint8_t *create_Iv(uint8_t *random_bytes) {
+    uint8_t *iv = malloc(16);
+    int i;
+    for (i = 0; i < 16; i++) {
+        iv[i] = random_bytes[AES_KEYLEN + i];
+    }
+    log_Debug("IV starts with 0x%x ends with 0x%x", iv[0], iv[15]);
+    return iv;
+} 
+
 void encryptFile(char *path) {
     FILE *file = NULL;
     uint8_t *in_bytes = NULL;
-    uint8_t encryption_key[AES_KEYLEN];
-    uint8_t encryption_iv[16];
+    uint8_t *encryption_key = NULL;
+    uint8_t *encryption_iv = NULL;
     uint8_t random_bytes[0x64 + AES_KEYLEN];
     uint64_t file_length;
     char header[9];
@@ -54,22 +79,10 @@ void encryptFile(char *path) {
     log_Debug("Offset %d", RANDOM_POS(file_length));
 
     // Create key
-    int i;
-    uint8_t c;
-    for (i = 0; i < AES_KEYLEN; i++) {
-        c = ENCRYPTION_KEY[i];
-        if ((i % 2) == 0) {
-            c = random_bytes[i / 2] ^ ENCRYPTION_KEY[i];
-        }
-        encryption_key[i] = c;
-    }
-    log_Debug("Key starts with 0x%x ends with 0x%x", encryption_key[0], encryption_key[31]);
+    encryption_key = create_Key(random_bytes);
 
     // Create iv
-    for (i = 0; i < 16; i++) {
-        encryption_iv[i] = random_bytes[AES_KEYLEN + i];
-    }
-    log_Debug("IV starts with 0x%x ends with 0x%x", encryption_iv[0], encryption_iv[15]);
+    encryption_iv = create_Iv(random_bytes);
 
     // Read file to encrypt
     file = fopen(path, "rb");
@@ -90,6 +103,7 @@ void encryptFile(char *path) {
     file_length -= 9;
 
     // Pad
+    int i;
     for (i = 0; i < 32; i++) {
         if ((file_length % 16) == 0) {
             break;
@@ -317,18 +331,28 @@ Archive *archive_Read(char *archivePath) {
             break;
         default:
             log_Debug("Reading archive");
+            file_size -= 9;
+            raw_data = malloc(file_size);
+            fseek(file, 9, SEEK_SET);
+            fread(raw_data, file_size, 1, file);
             break;
     }
 
+    // Close file
+    fclose(file);
+
+    // Copy file count to archive struct
     archive = malloc(sizeof(Archive));
     memcpy(&archive->file_count, raw_data, sizeof(archive->file_count));
     log_Debug("File count: %ld", archive->file_count);
 
+    // Create files
     archive->files = malloc(sizeof(ArchiveFile) * archive->file_count);
 
     uint64_t faddr;
     uint64_t i;
     for (i = 0; i < archive->file_count; i++) {
+        log_Debug("--- file ---");
         // Create file
         archive->files[i] = malloc(sizeof(ArchiveFile));
         // Get file size
@@ -341,12 +365,11 @@ Archive *archive_Read(char *archivePath) {
         log_Debug("File Address 0x%lx", faddr - 9);
         memcpy(archive->files[i]->contents, raw_data + (sizeof(uint64_t) * i) - 9, archive->files[i]->size);
         // Write path
-        strncpy(archive->files[i]->path, raw_data + sizeof(uint64_t) + ((sizeof(uint64_t) * archive->file_count) * 2) + (ARCHIVE_MAX_PATH_LENGTH * i), ARCHIVE_MAX_PATH_LENGTH - 1);
+        memcpy(archive->files[i]->path, raw_data + sizeof(uint64_t) + ((sizeof(uint64_t) * archive->file_count) * 2) + (ARCHIVE_MAX_PATH_LENGTH * i), ARCHIVE_MAX_PATH_LENGTH);
         log_Debug("Path %s", archive->files[i]->path);
     }
 
     free(raw_data);
-    fclose(file);
 
     return archive;
 }
