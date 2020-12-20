@@ -15,13 +15,22 @@ void engine_RenderFrame() {
     }
     script_CallFunction("main_loop");
     renderer_Present();
+    script_SetMouseUp();
 }
 
 void engine_ReadEvents() {
+    int x, y;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_QUIT:
                 running = false;
+                break;
+            // Mouse button down event
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    SDL_GetMouseState(&x, &y);
+                    script_HandleMouseDown(x, y);
+                }
                 break;
             default:
                 break;

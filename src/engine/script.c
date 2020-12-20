@@ -14,10 +14,43 @@ int script_CallFunction(const char *functionName) {
     
     // Run the function
     if (lua_pcall(g_State, 0, 0, 0)) {
-        log_Error("%s failed %s, was expecting function %s to be present", __FUNCTION__, lua_tostring(g_State, -1), functionName);
         return 1;
     }
     return 0;
+}
+
+void script_SetMouseUp() {
+    // Get global table
+    lua_getglobal(g_State, "mouse");
+
+    // Push bool into stack and set as down
+    lua_pushboolean(g_State, 0);
+    lua_setfield(g_State, -2, "down");
+
+    // Pop table from stack
+    lua_pop(g_State, 1);
+}
+
+void script_HandleMouseDown(int x, int y) {
+    log_Debug("X:%d Y:%d", x, y);
+
+    // Get global
+    lua_getglobal(g_State, "mouse");
+
+    // Push x to stack and set
+    lua_pushinteger(g_State, (lua_Integer)x);
+    lua_setfield(g_State, -2, "x");
+
+    // For y
+    lua_pushinteger(g_State, (lua_Integer)y);
+    lua_setfield(g_State, -2, "y");
+
+    // Set down bool
+    lua_pushboolean(g_State, 1);
+    lua_setfield(g_State, -2, "down");
+
+    // Pop mouse table from stack
+    lua_pop(g_State, 1);
 }
 
 void script_SetGlobalPath(const char *path) {
@@ -44,7 +77,11 @@ int script_Init(EngineConfig *config) {
     status = luaL_loadstring(g_State, config->script);
     script_SetGlobalPath(config->scriptDir);
 
-    // Set variables
+    // Game table, 1 item
+    lua_createtable(g_State, 0, 1);
+
+    // Create window table, 2 items, PUSH WINDOW STRING BEFORE TABLE TO STACK
+    lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
     lua_pushstring(g_State, "width");
@@ -55,8 +92,26 @@ int script_Init(EngineConfig *config) {
     lua_pushnumber(g_State, (lua_Number)config->height);
     lua_settable(g_State, -3);
 
-    // Pop from stack, set as global
-    lua_setglobal(g_State, "window");
+    // Create game table
+    lua_settable(g_State, -3);
+    lua_setglobal(g_State, "game");
+
+    // Create mouse event table
+    lua_createtable(g_State, 0, 3);
+    
+    lua_pushstring(g_State, "down");
+    lua_pushboolean(g_State, 0);
+    lua_settable(g_State, -3);
+
+    lua_pushstring(g_State, "x");
+    lua_pushinteger(g_State, 0);
+    lua_settable(g_State, -3);
+
+    lua_pushstring(g_State, "y");
+    lua_pushinteger(g_State, 0);
+    lua_settable(g_State, -3);
+
+    lua_setglobal(g_State, "mouse");
 
     // Run script
     if (lua_pcall(g_State, 0, 0, 0)) {
