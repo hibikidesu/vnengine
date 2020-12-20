@@ -33,7 +33,15 @@ int main(int argc, char *argv[]) {
     if (config == NULL) {
         return 1;
     }
-    log_DebugHex("Engine Config", config, sizeof(EngineConfig));
+    size_t config_offsets[5] = {
+        sizeof(config->title),
+        sizeof(config->width),
+        sizeof(config->height),
+        sizeof(config->script),
+        sizeof(config->scriptDir)
+    };
+    log_ColorHexStruct(config_offsets, 5);
+    log_DebugHex("EngineConfig", config, sizeof(EngineConfig));
 
     // Init engine
     engine_Init(config);

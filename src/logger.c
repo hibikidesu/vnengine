@@ -4,11 +4,33 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include "logger.h"
+#include "utils/ansi.h"
+
+// Cache for struct coloring
+#define LOG_STRUCT_MAX_SIZE 8
+static size_t log_Struct_Size = 0;
+static size_t log_Struct[LOG_STRUCT_MAX_SIZE];
+
+void log_ColorHexStruct(size_t *offsets, size_t size) {
+    int i;
+    size_t amount;
+    if (size > LOG_STRUCT_MAX_SIZE) {
+        amount = LOG_STRUCT_MAX_SIZE;
+    } else {
+        amount = size;
+    }
+    for (i = 0; i < amount; i++) {
+        memcpy(&log_Struct[i], &offsets[i], sizeof(size_t));
+        log_Struct_Size++;
+    }
+}
 
 void log_Hex(const char *name, const void *data, size_t size) {
     char ascii[17];
     size_t i;
     size_t read = 0;
+    size_t structItemLength = 0;
+    int currentStructItem = 0;
     printf("%s:\n", name);
 
     while (read < size) {
@@ -21,13 +43,21 @@ void log_Hex(const char *name, const void *data, size_t size) {
         // Read 16 bytes
         for (i = 0; i < 16; i++) {
             if (read < size) {
-                printf("%02X ", ((unsigned char*)data)[read]);
+                // COLOR CHECK
+                // Check if going over current struct item length read
+                if (structItemLength >= log_Struct[currentStructItem] && currentStructItem < 9) {
+                    currentStructItem++;
+                    structItemLength = 0;
+                }
+
+                printf("\x1B[%dm\x1B[%dm%02X %s", 30 + currentStructItem, 47 - currentStructItem, ((unsigned char*)data)[read], ANSI_RESET);
                 // ascii check
                 if (((unsigned char*)data)[read] >= ' ' && ((unsigned char*)data)[read] <= '~') {
                     ascii[i] = ((unsigned char*)data)[read];
                 } else {
                     ascii[i] = '.';
                 }
+                structItemLength++;
             } else {
                 printf("   ");
             }
@@ -38,6 +68,9 @@ void log_Hex(const char *name, const void *data, size_t size) {
         printf("%s\n", ascii);
     }
     printf("\n");
+
+    // Clear cache
+    log_Struct_Size = 0;
 }
 
 void log_Log(FILE *file, const char *level, const char *fmt, ...) {
