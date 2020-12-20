@@ -27,39 +27,15 @@ static uint8_t ENCRYPTION_KEY[] = {
     0xFC, 0xC3, 0x53, 0x7E, 0x83, 0x70, 0xE1, 0x7C, 0xE2, 0x41, 0xAC, 0x39, 0x93, 0x43, 0x20, 0x6D 
 };
 
-uint8_t *create_Key(uint8_t *random_bytes) {
-    uint8_t *key = malloc(AES_BLOCKLEN);
-    uint8_t c;
-    int i;
-    for (i = 0; i < AES_KEYLEN; i++) {
-        c = ENCRYPTION_KEY[i];
-        if ((i % 2) == 0) {
-            c = random_bytes[i / 2] ^ ENCRYPTION_KEY[i];
-        }
-        key[i] = c;
-    }
-    log_Debug("Key starts with 0x%x ends with 0x%x", key[0], key[31]);
-    return key;
-}
-
-uint8_t *create_Iv(uint8_t *random_bytes) {
-    uint8_t *iv = malloc(16);
-    int i;
-    for (i = 0; i < 16; i++) {
-        iv[i] = random_bytes[AES_KEYLEN + i];
-    }
-    log_Debug("IV starts with 0x%x ends with 0x%x", iv[0], iv[15]);
-    return iv;
-} 
-
 void encryptFile(char *path) {
     FILE *file = NULL;
     uint8_t *in_bytes = NULL;
-    uint8_t *encryption_key = NULL;
-    uint8_t *encryption_iv = NULL;
+    uint8_t encryption_key[AES_KEYLEN];
+    uint8_t encryption_iv[16];
     uint8_t random_bytes[0x64 + AES_KEYLEN];
     uint64_t file_length;
     char header[9];
+    int i;
 
     // Use bytes from binary as encryption key
     file = fopen("vnengine", "rb");
@@ -78,11 +54,24 @@ void encryptFile(char *path) {
     fclose(file);
     log_Debug("Offset %d", RANDOM_POS(file_length));
 
+    log_DebugHex("Original Encryption Key", ENCRYPTION_KEY, AES_KEYLEN);
+
     // Create key
-    encryption_key = create_Key(random_bytes);
+    uint8_t c;
+    for (i = 0; i < AES_KEYLEN; i++) {
+        c = ENCRYPTION_KEY[i];
+        if ((i % 2) == 0) {
+            c = random_bytes[i / 2] ^ ENCRYPTION_KEY[i];
+        }
+        encryption_key[i] = c;
+    }
+    log_DebugHex("Encryption Key", encryption_key, AES_KEYLEN);
 
     // Create iv
-    encryption_iv = create_Iv(random_bytes);
+    for (i = 0; i < 16; i++) {
+        encryption_iv[i] = random_bytes[AES_KEYLEN + i];
+    }
+    log_DebugHex("Encryption IV", encryption_iv, 16);
 
     // Read file to encrypt
     file = fopen(path, "rb");
@@ -103,7 +92,6 @@ void encryptFile(char *path) {
     file_length -= 9;
 
     // Pad
-    int i;
     for (i = 0; i < 32; i++) {
         if ((file_length % 16) == 0) {
             break;
@@ -122,10 +110,6 @@ void encryptFile(char *path) {
     AES_init_ctx_iv(&ctx, encryption_key, encryption_iv);
     AES_CBC_encrypt_buffer(&ctx, in_bytes, file_length);
 
-    // Free keys
-    free(encryption_key);
-    free(encryption_iv);
-
     // Write to file
     file = fopen(path, "wb");
 
@@ -140,11 +124,12 @@ void encryptFile(char *path) {
 }
 
 void readEncrypted(uint8_t *buffer, uint64_t length) {
-    uint8_t *encryption_key = NULL;
-    uint8_t *encryption_iv = NULL;
+    uint8_t encryption_key[AES_KEYLEN];
+    uint8_t encryption_iv[16];
     uint8_t random_bytes[0x64 + AES_KEYLEN];
     uint64_t file_length = 0;
     FILE* file = NULL;
+    int i;
 
     // Get random bytes
     file = fopen("vnengine", "rb");
@@ -165,17 +150,26 @@ void readEncrypted(uint8_t *buffer, uint64_t length) {
     log_Debug("Decryption length: %ld", length);
 
     // Create key
-    encryption_key = create_Key(random_bytes);
+    uint8_t c;
+    for (i = 0; i < AES_KEYLEN; i++) {
+        c = ENCRYPTION_KEY[i];
+        if ((i % 2) == 0) {
+            c = random_bytes[i / 2] ^ ENCRYPTION_KEY[i];
+        }
+        encryption_key[i] = c;
+    }
+    log_DebugHex("Decryption Key", encryption_key, AES_KEYLEN);
 
     // Create iv
-    encryption_iv = create_Iv(random_bytes);
+    for (i = 0; i < 16; i++) {
+        encryption_iv[i] = random_bytes[AES_KEYLEN + i];
+    }
+    log_DebugHex("Decryption IV", encryption_iv, 16);
 
     // Decrypt
     struct AES_ctx ctx;
     AES_init_ctx_iv(&ctx, encryption_key, encryption_iv);
     AES_CBC_decrypt_buffer(&ctx, buffer, length);
-    free(encryption_key);
-    free(encryption_iv);
 }
 
 uint64_t _compressData(FILE *file, int level, int bufferSize, char **buffer) {
@@ -351,8 +345,7 @@ Archive *archive_Read(char *archivePath) {
 
     // Check header
     fread(&header, 5, 1, file);
-    log_Debug("First byte of header 0x%x", (unsigned)(unsigned char)header[0]);
-    log_Debug("Header: %s", header);
+    log_DebugHex("File Header", header, 5);
     if ((strncmp(header, "baka\0", 5)) != 0) {
         log_Error("Invalid archive header");
         fclose(file);
@@ -402,21 +395,18 @@ Archive *archive_Read(char *archivePath) {
     uint64_t faddr;
     uint64_t i;
     for (i = 0; i < archive->file_count; i++) {
-        log_Debug("--- file ---");
         // Create file
         archive->files[i] = malloc(sizeof(ArchiveFile));
         // Get file size
-        log_Debug("Size offset 0x%lx", (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)));
         memcpy(&archive->files[i]->size, raw_data + sizeof(uint64_t) + (sizeof(uint64_t) * archive->file_count) + (i * sizeof(uint64_t)), sizeof(uint64_t));
-        log_Debug("Size: %ld", archive->files[i]->size);
         // Get file address and read contents
         archive->files[i]->contents = malloc(archive->files[i]->size);
         memcpy(&faddr, raw_data + (sizeof(uint64_t) * (i + 1)), sizeof(faddr));
-        log_Debug("File Address 0x%lx", faddr - 9);
-        memcpy(archive->files[i]->contents, raw_data + (sizeof(uint64_t) * i) - 9, archive->files[i]->size);
+        memcpy(archive->files[i]->contents, raw_data + faddr - 9, archive->files[i]->size);
         // Write path
         memcpy(archive->files[i]->path, raw_data + sizeof(uint64_t) + ((sizeof(uint64_t) * archive->file_count) * 2) + (ARCHIVE_MAX_PATH_LENGTH * i), ARCHIVE_MAX_PATH_LENGTH);
-        log_Debug("Path %s", archive->files[i]->path);
+        //log_DebugHex("File", archive->files[i], sizeof(ArchiveFile));
+        log_DebugHex("File Contents", archive->files[i]->contents, archive->files[i]->size);
     }
 
     free(raw_data);

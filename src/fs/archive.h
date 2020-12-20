@@ -15,8 +15,8 @@ typedef enum {
 } ArchiveFlags;
 
 typedef struct {
-    char path[ARCHIVE_MAX_PATH_LENGTH];
     uint64_t size;
+    char path[ARCHIVE_MAX_PATH_LENGTH];
     char *contents;
 } ArchiveFile;
 typedef struct {
