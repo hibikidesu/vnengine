@@ -1,28 +1,25 @@
 #include <stdio.h>
+#include <stdint.h>
+#include <SDL2/SDL.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
 #include "script.h"
 #include "engine.h"
+#include "renderer.h"
 #include "../logger.h"
+#include "wrapped.h"
+
+#define REGISTER_WRAP(name, func) \
+    lua_pushstring(g_State, name);    \
+    lua_pushcfunction(g_State, func);   \
+    lua_settable(g_State, -3);
 
 static lua_State *g_State = NULL;
 
 void kvIntToStack(const char *key, const int value) {
     lua_pushstring(g_State, key);
     lua_pushnumber(g_State, (lua_Number)value);
-}
-
-static int script_WrapperChangeScene(lua_State *state) {
-    int value = luaL_checknumber(state, 1);
-    if (value < 0) {
-        // Fail
-        lua_pushboolean(state, 0);
-    } else {
-        engine_ChangeScene(value);
-        lua_pushboolean(state, 1);
-    }
-    return 1;
 }
 
 int script_CallFunction(const char *functionName) {
@@ -113,10 +110,12 @@ int script_Init(EngineConfig *config) {
     // Append table to game table
     lua_settable(g_State, -3);
 
-    // Append 
-    lua_pushstring(g_State, "changeScene");
-    lua_pushcfunction(g_State, script_WrapperChangeScene);
-    lua_settable(g_State, -3);
+    REGISTER_WRAP("setScene", wrapped_SetScene);
+    REGISTER_WRAP("drawRect", wrapped_DrawRect);
+    REGISTER_WRAP("drawFillRect", wrapped_DrawFillRect);
+    REGISTER_WRAP("SDL_Error", wrapped_SDLError);
+    REGISTER_WRAP("drawRect", wrapped_DrawRect);
+    REGISTER_WRAP("setDrawColor", wrapped_SetDrawColor);
 
     // Set as global
     lua_setglobal(g_State, "game");

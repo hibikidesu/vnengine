@@ -10,7 +10,11 @@ static bool running = false;
 static SDL_Event event;
 static int scene = 0;
 
-void engine_ChangeScene(int newscene) {
+int engine_GetScene() {
+    return scene;
+}
+
+void engine_SetScene(int newscene) {
     scene = newscene;
 }
 

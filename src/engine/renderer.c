@@ -7,6 +7,18 @@
 static SDL_Window *g_Window = NULL;
 static SDL_Renderer *g_Renderer = NULL;
 
+int renderer_SetDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    return SDL_SetRenderDrawColor(g_Renderer, r, g, b, a);
+}
+
+int renderer_DrawFillRect(int x, int y, int w, int h) {
+    return SDL_RenderFillRect(g_Renderer, &(SDL_Rect){x, y, w, h});
+}
+
+int renderer_DrawRect(int x, int y, int w, int h) {
+    return SDL_RenderDrawRect(g_Renderer, &(SDL_Rect){x, y, w, h});
+}
+
 void renderer_Present() {
     SDL_RenderPresent(g_Renderer);
 }
