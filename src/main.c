@@ -34,14 +34,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 #if DEBUG == 1
-    size_t config_offsets[5] = {
-        sizeof(config->title),
-        sizeof(config->width),
-        sizeof(config->height),
-        sizeof(config->script),
-        sizeof(config->scriptDir)
-    };
-    log_ColorHexStruct(config_offsets, 5);
+    log_HexAppendStructItem(sizeof(config->title));
+    log_HexAppendStructItem(sizeof(config->width));
+    log_HexAppendStructItem(sizeof(config->height));
+    log_HexAppendStructItem(sizeof(config->script));
+    log_HexAppendStructItem(sizeof(config->scriptDir));
 #endif
     log_DebugHex("EngineConfig", config, sizeof(EngineConfig));
 

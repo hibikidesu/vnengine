@@ -13,7 +13,7 @@ int script_CallFunction(const char *functionName) {
     
     // Run the function
     if (lua_pcall(g_State, 0, 0, 0)) {
-        log_Error("%s failed %s", __FUNCTION__, lua_tostring(g_State, -1));
+        log_Error("%s failed %s, was expecting function %s to be present", __FUNCTION__, lua_tostring(g_State, -1), functionName);
         return 1;
     }
     return 0;

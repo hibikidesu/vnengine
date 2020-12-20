@@ -13,6 +13,7 @@ void engine_RenderFrame() {
     if (running == false) {
         return;
     }
+    script_CallFunction("main_loop");
     renderer_Present();
 }
 
