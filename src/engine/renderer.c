@@ -11,6 +11,10 @@ int renderer_SetDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     return SDL_SetRenderDrawColor(g_Renderer, r, g, b, a);
 }
 
+int renderer_DrawLine(int x1, int y1, int x2, int y2) {
+    return SDL_RenderDrawLine(g_Renderer, x1, y1, x2, y2);
+}
+
 int renderer_DrawFillRect(int x, int y, int w, int h) {
     return SDL_RenderFillRect(g_Renderer, &(SDL_Rect){x, y, w, h});
 }

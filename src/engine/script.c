@@ -97,7 +97,7 @@ int script_Init(EngineConfig *config) {
     lua_createtable(g_State, 0, 2);
 
     // Create window table, 2 items, PUSH WINDOW STRING BEFORE TABLE TO STACK
-    // [stack] <game table>, ["window", <window table>], <changeScene function>
+    // [stack] <game table>, ["window", <window table>], <extra functions>
     lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
@@ -113,8 +113,8 @@ int script_Init(EngineConfig *config) {
     REGISTER_WRAP("setScene", wrapped_SetScene);
     REGISTER_WRAP("drawRect", wrapped_DrawRect);
     REGISTER_WRAP("drawFillRect", wrapped_DrawFillRect);
+    REGISTER_WRAP("setDrawLine", wrapped_DrawLine);
     REGISTER_WRAP("SDL_Error", wrapped_SDLError);
-    REGISTER_WRAP("drawRect", wrapped_DrawRect);
     REGISTER_WRAP("setDrawColor", wrapped_SetDrawColor);
 
     // Set as global
