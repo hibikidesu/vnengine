@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include "logger.h"
 
-void log_Hex(char *name, const void *data, size_t size) {
+void log_Hex(const char *name, const void *data, size_t size) {
     char ascii[17];
     size_t i;
     size_t read = 0;

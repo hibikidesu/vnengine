@@ -1,7 +1,7 @@
 #ifndef VNENGINE_LOGGER
 #define VNENGINE_LOGGER
 
-void log_Hex(char *name, const void *data, size_t size);
+void log_Hex(const char *name, const void *data, size_t size);
 void log_Log(FILE *file, const char *level, const char *fmt, ...);
 
 #define log_Info(fmt, ...) log_Log(stdout, "INFO", fmt, ##__VA_ARGS__)
