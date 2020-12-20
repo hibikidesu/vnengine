@@ -6,8 +6,10 @@ typedef struct {
     int width;
     int height;
     char *script;
+    char *scriptDir;
 } EngineConfig;
 
+void engine_Run();
 int engine_Init(EngineConfig *config);
 void engine_Free();
 

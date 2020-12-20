@@ -9,12 +9,14 @@ void log_Hex(const char *name, const void *data, size_t size) {
     char ascii[17];
     size_t i;
     size_t read = 0;
-    memset(ascii, 0, 17);
     printf("%s:\n", name);
 
     while (read < size) {
         // Print offset
         printf("    %08lX: ", read);
+
+        // Clear ascii buffer
+        memset(ascii, '\0', 17);
 
         // Read 16 bytes
         for (i = 0; i < 16; i++) {
@@ -22,9 +24,9 @@ void log_Hex(const char *name, const void *data, size_t size) {
                 printf("%02X ", ((unsigned char*)data)[read]);
                 // ascii check
                 if (((unsigned char*)data)[read] >= ' ' && ((unsigned char*)data)[read] <= '~') {
-                    ascii[read % 16] = ((unsigned char*)data)[read];
+                    ascii[i] = ((unsigned char*)data)[read];
                 } else {
-                    ascii[read % 16] = '.';
+                    ascii[i] = '.';
                 }
             } else {
                 printf("   ");

@@ -406,7 +406,7 @@ Archive *archive_Read(char *archivePath) {
         // Write path
         memcpy(archive->files[i]->path, raw_data + sizeof(uint64_t) + ((sizeof(uint64_t) * archive->file_count) * 2) + (ARCHIVE_MAX_PATH_LENGTH * i), ARCHIVE_MAX_PATH_LENGTH);
         //log_DebugHex("File", archive->files[i], sizeof(ArchiveFile));
-        log_DebugHex("File Contents", archive->files[i]->contents, archive->files[i]->size);
+        //log_DebugHex("File Contents", archive->files[i]->contents, archive->files[i]->size);
     }
 
     free(raw_data);

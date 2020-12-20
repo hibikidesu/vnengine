@@ -1,1 +1,1 @@
-print("owo")
+require "menu"

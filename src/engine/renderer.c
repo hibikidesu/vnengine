@@ -7,6 +7,10 @@
 static SDL_Window *g_Window = NULL;
 static SDL_Renderer *g_Renderer = NULL;
 
+void renderer_Present() {
+    SDL_RenderPresent(g_Renderer);
+}
+
 int renderer_Init(char *windowTitle, int windowW, int windowH) {
     // Init SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {

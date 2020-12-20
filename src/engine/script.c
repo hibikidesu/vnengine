@@ -7,7 +7,14 @@
 
 static lua_State *g_State = NULL;
 
-int script_Init(const char *script) {
+void script_SetGlobalPath(const char *path) {
+    lua_getglobal(g_State, "package");
+    lua_pushstring(g_State, path);
+    lua_setfield(g_State, -2, "path");
+    lua_pop(g_State, 1);
+}
+
+int script_Init(const char *script, const char *path) {
     int status = 0;
 
     // Create state
@@ -19,9 +26,11 @@ int script_Init(const char *script) {
 
     // Load libs
     luaL_openlibs(g_State);
-    
+
     // Load string
     status = luaL_loadstring(g_State, script);
+
+    script_SetGlobalPath(path);
 
     // Run script
     if (lua_pcall(g_State, 0, 0, 0)) {

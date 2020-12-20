@@ -7,11 +7,12 @@
 #include "fs/archive.h"
 #include "logger.h"
 
-EngineConfig *createConfig(char *title, int width, int height, char *scriptPath) {
+EngineConfig *createConfig(char *title, int width, int height, char *scriptPath, char *scriptDir) {
     EngineConfig *config = malloc(sizeof(EngineConfig));
     strcpy(config->title, title);
     config -> width = width;
     config -> height = height;
+    config->scriptDir = scriptDir;
 
     // Load script
     char *buffer = NULL;
@@ -27,44 +28,18 @@ EngineConfig *createConfig(char *title, int width, int height, char *scriptPath)
 }
 
 int main(int argc, char *argv[]) {
-    ArchiveFile **files = malloc(sizeof(ArchiveFile) * 2);
-    files[0] = malloc(sizeof(ArchiveFile));
-    files[1] = malloc(sizeof(ArchiveFile));
-
-    // Read file
-    char *buf = NULL;
-    uint64_t len = fs_ReadFile("Makefile", &buf);
-
-    files[0] -> contents = buf;
-    files[0] -> size = len;
-    strcpy(files[0]->path, "/Makefile");
-
-    char *x = "baka u";
-    files[1] -> contents = malloc(strlen(x) + 1);
-    strncpy(files[1]->contents, x, strlen(x) + 1);
-    files[1] -> size = strlen(x) + 1;
-    strcpy(files[1]->path, "/sex");
-
-    archive_Create("encrypted.dat", 2, files, encrypted);
-    free(files[0]->contents);
-    free(files[0]);
-    free(files[1]->contents);
-    free(files[1]);
-    free(files);
-
-    files = NULL;
-    Archive *archive = archive_Read("encrypted.dat");
-    archive_Free(archive);
-    return 0;
-
     // Create config
-    EngineConfig *config = createConfig("VNEngine", 1280, 720, "data/main.lua");
+    EngineConfig *config = createConfig("VNEngine", 1280, 720, "data/main.lua", "./data/?.lua");
     if (config == NULL) {
         return 1;
     }
+    log_DebugHex("Engine Config", config, sizeof(EngineConfig));
 
     // Init engine
     engine_Init(config);
+
+    // Run loop
+    engine_Run();
 
     // Cleanup
     engine_Free();
