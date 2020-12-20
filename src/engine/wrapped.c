@@ -1,10 +1,15 @@
 #include <SDL2/SDL.h>
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+#include <luajit-2.0/lua.h>
+#include <luajit-2.0/lualib.h>
+#include <luajit-2.0/lauxlib.h>
 #include "wrapped.h"
 #include "renderer.h"
 #include "engine.h"
+
+int wrapped_RenderClear(lua_State *state) {
+    lua_pushnumber(state, (lua_Number)renderer_Clear());
+    return 1;
+}
 
 int wrapped_SetDrawColor(lua_State *state) {
     uint8_t r = luaL_checknumber(state, 1);
@@ -44,6 +49,11 @@ int wrapped_DrawRect(lua_State *state) {
     int w = luaL_checknumber(state, 3);
     int h = luaL_checknumber(state, 4);
     lua_pushnumber(state, (lua_Number)renderer_DrawRect(x, y, w, h));
+    return 1;
+}
+
+int wrapped_GetScene(lua_State *state) {
+    lua_pushnumber(state, (lua_Number)engine_GetScene());
     return 1;
 }
 

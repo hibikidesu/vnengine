@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <SDL2/SDL.h>
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+#include <luajit-2.0/lua.h>
+#include <luajit-2.0/lualib.h>
+#include <luajit-2.0/lauxlib.h>
 #include "script.h"
 #include "engine.h"
 #include "renderer.h"
@@ -111,11 +111,13 @@ int script_Init(EngineConfig *config) {
     lua_settable(g_State, -3);
 
     REGISTER_WRAP("setScene", wrapped_SetScene);
+    REGISTER_WRAP("getScene", wrapped_GetScene);
     REGISTER_WRAP("drawRect", wrapped_DrawRect);
     REGISTER_WRAP("drawFillRect", wrapped_DrawFillRect);
     REGISTER_WRAP("setDrawLine", wrapped_DrawLine);
     REGISTER_WRAP("SDL_Error", wrapped_SDLError);
     REGISTER_WRAP("setDrawColor", wrapped_SetDrawColor);
+    REGISTER_WRAP("renderClear", wrapped_RenderClear);
 
     // Set as global
     lua_setglobal(g_State, "game");

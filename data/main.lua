@@ -2,9 +2,7 @@ require "menu"
 require "utils.button"
 
 function main_loop()
-    if mouse.down == true then
-        
+    if game.getScene() == 0 then
+        menu_render()
     end
-    game.setDrawColor(255, 255, 255, 255)
-    game.drawFillRect(0, 0, 100, 100)
 end

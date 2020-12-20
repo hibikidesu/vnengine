@@ -7,6 +7,10 @@
 static SDL_Window *g_Window = NULL;
 static SDL_Renderer *g_Renderer = NULL;
 
+int renderer_Clear() {
+    return SDL_RenderClear(g_Renderer);
+}
+
 int renderer_SetDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     return SDL_SetRenderDrawColor(g_Renderer, r, g, b, a);
 }

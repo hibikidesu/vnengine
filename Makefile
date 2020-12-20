@@ -9,7 +9,7 @@ ifeq ($(DEBUG), 1)
 CFLAGS += -ggdb3
 endif
 
-LIBS		:= $(shell pkg-config --libs sdl2 SDL2_ttf SDL2_mixer SDL2_image lua zlib)
+LIBS		:= $(shell pkg-config --libs sdl2 SDL2_ttf SDL2_mixer SDL2_image luajit zlib)
 SRC			:= $(shell find src -name '*.c')
 OBJS		:= $(patsubst %.c,%.o,$(SRC))
 
