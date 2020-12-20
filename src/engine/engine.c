@@ -8,6 +8,11 @@
 
 static bool running = false;
 static SDL_Event event;
+static int scene = 0;
+
+void engine_ChangeScene(int newscene) {
+    scene = newscene;
+}
 
 void engine_RenderFrame() {
     if (running == false) {

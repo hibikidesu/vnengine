@@ -13,6 +13,18 @@ void kvIntToStack(const char *key, const int value) {
     lua_pushnumber(g_State, (lua_Number)value);
 }
 
+static int script_WrapperChangeScene(lua_State *state) {
+    int value = luaL_checknumber(state, 1);
+    if (value < 0) {
+        // Fail
+        lua_pushboolean(state, 0);
+    } else {
+        engine_ChangeScene(value);
+        lua_pushboolean(state, 1);
+    }
+    return 1;
+}
+
 int script_CallFunction(const char *functionName) {
     // Get the function from global
     lua_getglobal(g_State, functionName);
@@ -82,11 +94,13 @@ int script_Init(EngineConfig *config) {
     status = luaL_loadstring(g_State, config->script);
     script_SetGlobalPath(config->scriptDir);
 
-    // Game table, 1 item
-    lua_createtable(g_State, 0, 1);
+    //
+    // GAME TABLE
+    //
+    lua_createtable(g_State, 0, 2);
 
     // Create window table, 2 items, PUSH WINDOW STRING BEFORE TABLE TO STACK
-    // [stack] <game table>, ["window", <window table>]
+    // [stack] <game table>, ["window", <window table>], <changeScene function>
     lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
@@ -96,11 +110,20 @@ int script_Init(EngineConfig *config) {
     kvIntToStack("height", config->height);
     lua_settable(g_State, -3);
 
-    // Create game table
+    // Append table to game table
     lua_settable(g_State, -3);
+
+    // Append 
+    lua_pushstring(g_State, "changeScene");
+    lua_pushcfunction(g_State, script_WrapperChangeScene);
+    lua_settable(g_State, -3);
+
+    // Set as global
     lua_setglobal(g_State, "game");
 
-    // Create mouse event table
+    //
+    // MOUSE TABLE
+    //
     lua_createtable(g_State, 0, 3);
     
     lua_pushstring(g_State, "down");

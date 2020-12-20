@@ -1,9 +1,6 @@
 require "menu"
 
-print("game", game)
-print("game.width", game.width)
-print("game.window", game.window)
-print("game.window.width", game.window.width)
+print(game.changeScene(0))
 
 function main_loop()
     if mouse.down == true then

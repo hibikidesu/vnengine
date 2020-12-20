@@ -9,6 +9,7 @@ typedef struct {
     char *scriptDir;
 } EngineConfig;
 
+void engine_ChangeScene(int newscene);
 void engine_Run();
 int engine_Init(EngineConfig *config);
 void engine_Free();
