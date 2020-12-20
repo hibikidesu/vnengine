@@ -8,6 +8,11 @@
 
 static lua_State *g_State = NULL;
 
+void numberToStack(const char *key, const int value) {
+    lua_pushstring(g_State, key);
+    lua_pushnumber(g_State, (lua_Number)value);
+}
+
 int script_CallFunction(const char *functionName) {
     // Get the function from global
     lua_getglobal(g_State, functionName);
@@ -84,12 +89,10 @@ int script_Init(EngineConfig *config) {
     lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
-    lua_pushstring(g_State, "width");
-    lua_pushnumber(g_State, (lua_Number)config->width);
+    numberToStack("width", config->width);
     lua_settable(g_State, -3);
 
-    lua_pushstring(g_State, "height");
-    lua_pushnumber(g_State, (lua_Number)config->height);
+    numberToStack("height", config->height);
     lua_settable(g_State, -3);
 
     // Create game table
@@ -103,12 +106,10 @@ int script_Init(EngineConfig *config) {
     lua_pushboolean(g_State, 0);
     lua_settable(g_State, -3);
 
-    lua_pushstring(g_State, "x");
-    lua_pushinteger(g_State, 0);
+    numberToStack("x", 0);
     lua_settable(g_State, -3);
 
-    lua_pushstring(g_State, "y");
-    lua_pushinteger(g_State, 0);
+    numberToStack("y", 0);
     lua_settable(g_State, -3);
 
     lua_setglobal(g_State, "mouse");
