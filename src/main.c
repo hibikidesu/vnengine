@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
     if (config == NULL) {
         return 1;
     }
+#if DEBUG == 1
     size_t config_offsets[5] = {
         sizeof(config->title),
         sizeof(config->width),
@@ -41,6 +42,7 @@ int main(int argc, char *argv[]) {
         sizeof(config->scriptDir)
     };
     log_ColorHexStruct(config_offsets, 5);
+#endif
     log_DebugHex("EngineConfig", config, sizeof(EngineConfig));
 
     // Init engine

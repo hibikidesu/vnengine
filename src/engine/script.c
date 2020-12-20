@@ -7,6 +7,18 @@
 
 static lua_State *g_State = NULL;
 
+int script_CallFunction(const char *functionName) {
+    // Get the function from global
+    lua_getglobal(g_State, functionName);
+    
+    // Run the function
+    if (lua_pcall(g_State, 0, 0, 0)) {
+        log_Error("%s failed %s", __FUNCTION__, lua_tostring(g_State, -1));
+        return 1;
+    }
+    return 0;
+}
+
 void script_SetGlobalPath(const char *path) {
     lua_getglobal(g_State, "package");
     lua_pushstring(g_State, path);
