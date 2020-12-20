@@ -1,10 +1,7 @@
 require "menu"
 
-if type(jit) == 'table' then
-    print(jit.version)  --LuaJIT 2.0.2
- end
- 
+scene = 0
 
 function main_loop()
-    -- print("loop")
+    switch
 end

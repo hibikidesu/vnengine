@@ -46,7 +46,7 @@ int engine_Init(EngineConfig *config) {
     }
 
     // Init script
-    if ((status = script_Init(config->script, config->scriptDir))) {
+    if ((status = script_Init(config))) {
         return status;
     }
 

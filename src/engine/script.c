@@ -3,6 +3,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include "script.h"
+#include "engine.h"
 #include "../logger.h"
 
 static lua_State *g_State = NULL;
@@ -26,7 +27,7 @@ void script_SetGlobalPath(const char *path) {
     lua_pop(g_State, 1);
 }
 
-int script_Init(const char *script, const char *path) {
+int script_Init(EngineConfig *config) {
     int status = 0;
 
     // Create state
@@ -39,10 +40,23 @@ int script_Init(const char *script, const char *path) {
     // Load libs
     luaL_openlibs(g_State);
 
-    // Load string
-    status = luaL_loadstring(g_State, script);
+    // Load string and set path of scripts
+    status = luaL_loadstring(g_State, config->script);
+    script_SetGlobalPath(config->scriptDir);
 
-    script_SetGlobalPath(path);
+    // Set variables
+    lua_createtable(g_State, 0, 2);
+
+    lua_pushstring(g_State, "width");
+    lua_pushnumber(g_State, (lua_Number)config->width);
+    lua_settable(g_State, -3);
+
+    lua_pushstring(g_State, "height");
+    lua_pushnumber(g_State, (lua_Number)config->height);
+    lua_settable(g_State, -3);
+
+    // Pop from stack, set as global
+    lua_setglobal(g_State, "window");
 
     // Run script
     if (lua_pcall(g_State, 0, 0, 0)) {
