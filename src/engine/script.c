@@ -8,7 +8,7 @@
 
 static lua_State *g_State = NULL;
 
-void numberToStack(const char *key, const int value) {
+void kvIntToStack(const char *key, const int value) {
     lua_pushstring(g_State, key);
     lua_pushnumber(g_State, (lua_Number)value);
 }
@@ -86,13 +86,14 @@ int script_Init(EngineConfig *config) {
     lua_createtable(g_State, 0, 1);
 
     // Create window table, 2 items, PUSH WINDOW STRING BEFORE TABLE TO STACK
+    // [stack] <game table>, ["window", <window table>]
     lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
-    numberToStack("width", config->width);
+    kvIntToStack("width", config->width);
     lua_settable(g_State, -3);
 
-    numberToStack("height", config->height);
+    kvIntToStack("height", config->height);
     lua_settable(g_State, -3);
 
     // Create game table
@@ -106,10 +107,10 @@ int script_Init(EngineConfig *config) {
     lua_pushboolean(g_State, 0);
     lua_settable(g_State, -3);
 
-    numberToStack("x", 0);
+    kvIntToStack("x", 0);
     lua_settable(g_State, -3);
 
-    numberToStack("y", 0);
+    kvIntToStack("y", 0);
     lua_settable(g_State, -3);
 
     lua_setglobal(g_State, "mouse");
