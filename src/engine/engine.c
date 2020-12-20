@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "engine.h"
 #include "renderer.h"
 #include "script.h"
@@ -63,6 +64,11 @@ int engine_Init(EngineConfig *config) {
         return status;
     }
 
+    if ((status = IMG_Init(IMG_INIT_PNG)) == 0) {
+        log_Error("Failed to SDL_image, %s", SDL_GetError());
+        return status;
+    }
+
     // Init script
     if ((status = script_Init(config))) {
         return status;
@@ -73,6 +79,7 @@ int engine_Init(EngineConfig *config) {
 
 void engine_Free() {
     log_Info("Engine shutting down");
+    IMG_Quit();
     script_Free();
     renderer_Free();
 }
