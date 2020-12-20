@@ -7,6 +7,17 @@
 static SDL_Window *g_Window = NULL;
 static SDL_Renderer *g_Renderer = NULL;
 
+int renderer_ShowSurface(SDL_Surface *surface) {
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(g_Renderer, surface);
+    if (texture == NULL) {
+        log_Error("Failed to create surface from texture");
+        return 1;
+    }
+    SDL_RenderCopy(g_Renderer, texture, NULL, NULL);
+    SDL_DestroyTexture(texture);
+    return 0;
+}
+
 int renderer_Clear() {
     return SDL_RenderClear(g_Renderer);
 }

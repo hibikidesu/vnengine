@@ -79,6 +79,7 @@ int engine_Init(EngineConfig *config) {
 
 void engine_Free() {
     log_Info("Engine shutting down");
+    script_CallFunction("shutdown");
     IMG_Quit();
     script_Free();
     renderer_Free();

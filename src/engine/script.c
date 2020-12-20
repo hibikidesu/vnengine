@@ -118,6 +118,9 @@ int script_Init(EngineConfig *config) {
     REGISTER_WRAP("SDL_Error", wrapped_SDLError);
     REGISTER_WRAP("setDrawColor", wrapped_SetDrawColor);
     REGISTER_WRAP("renderClear", wrapped_RenderClear);
+    REGISTER_WRAP("IMGLoad", wrapped_IMGLoad);
+    REGISTER_WRAP("freeSurface", wrapped_FreeSurface);
+    REGISTER_WRAP("showSurface", wrapped_ShowSurface);
 
     // Set as global
     lua_setglobal(g_State, "game");
