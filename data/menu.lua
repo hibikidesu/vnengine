@@ -1,20 +1,34 @@
-button = {};
-button.tex = image.load("assets/system/ui/button.png");
-button.x = 50; 
-button.y = 50;
-button.w, button.h = render.queryTexture(button.tex);
+-- List of buttons
+buttons = {
+    {
+        tex = image.load("assets/system/ui/button.png"),
+        x = 0,
+        y = 0
+    }
+}
 
+-- Query texture for all buttons
+for i=1, #buttons do
+    local w, h = render.queryTexture(buttons[i].tex);
+    buttons[i].w = w;
+    buttons[i].h = h;
+end
+
+-- Check if button press
 function check_on_button(x, y) 
-    if (x >= button.x and x <= (button.x + button.w) and
-        y >= button.y and y <= (button.y + button.h)) then
-        print("YES")
+    for i=1, #buttons do
+        if (x >= buttons[i].x and x <= (buttons[i].x + buttons[i].w) and
+            y >= buttons[i].y and y <= (buttons[i].y + buttons[i].h)) then
+            engine.setScene(i);
+            render.clear();
+        end
     end
 end
 
 function menu_render()
     render.setDrawColor(255, 255, 255, 255);
     render.clear();
-    render.showTexture(button.tex, button.x, button.y, button.w, button.h);
+    render.showTexture(buttons[1].tex, buttons[1].x, buttons[1].y, buttons[1].w, buttons[1].h);
 
     -- Handle mousedown on button
     if controls.mouse.down then
