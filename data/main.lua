@@ -7,13 +7,7 @@ function main_loop()
 		print("X", controls.mouse.x)
 		print("Y", controls.mouse.y)
 	end
-	local w = window.width
-	local h = window.height
-
-	render.setDrawColor(255, 255, 255, 255)
-	render.clear()
-
-	render.show
+	render.showTexture(button, 0, 0)
 end
 
 function shutdown() 

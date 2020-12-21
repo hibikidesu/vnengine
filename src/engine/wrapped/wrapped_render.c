@@ -7,8 +7,9 @@
 
 int wrapped_RendererShowTexture(lua_State *state) {
     int w, h;
-    int x = luaL_checknumber(state, 1);
-    int y = luaL_checknumber(state, 2);
+    luaL_checkany(state, 1);
+    int x = luaL_checknumber(state, 2);
+    int y = luaL_checknumber(state, 3);
     SDL_Texture *texture = (SDL_Texture*)lua_touserdata(state, 1);
     if (texture == NULL) {
         lua_pushstring(state, "Failed to get texture");
