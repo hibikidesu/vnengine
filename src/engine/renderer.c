@@ -7,35 +7,8 @@
 static SDL_Window *g_Window = NULL;
 static SDL_Renderer *g_Renderer = NULL;
 
-int renderer_ShowSurface(SDL_Surface *surface) {
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(g_Renderer, surface);
-    if (texture == NULL) {
-        log_Error("Failed to create surface from texture");
-        return 1;
-    }
-    SDL_RenderCopy(g_Renderer, texture, NULL, NULL);
-    SDL_DestroyTexture(texture);
-    return 0;
-}
-
-int renderer_Clear() {
-    return SDL_RenderClear(g_Renderer);
-}
-
-int renderer_SetDrawColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-    return SDL_SetRenderDrawColor(g_Renderer, r, g, b, a);
-}
-
-int renderer_DrawLine(int x1, int y1, int x2, int y2) {
-    return SDL_RenderDrawLine(g_Renderer, x1, y1, x2, y2);
-}
-
-int renderer_DrawFillRect(int x, int y, int w, int h) {
-    return SDL_RenderFillRect(g_Renderer, &(SDL_Rect){x, y, w, h});
-}
-
-int renderer_DrawRect(int x, int y, int w, int h) {
-    return SDL_RenderDrawRect(g_Renderer, &(SDL_Rect){x, y, w, h});
+SDL_Renderer *renderer_GetRenderer() {
+    return g_Renderer;
 }
 
 void renderer_Present() {
