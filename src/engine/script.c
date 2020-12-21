@@ -8,7 +8,11 @@
 #include "engine.h"
 #include "renderer.h"
 #include "../logger.h"
-#include "wrapped.h"
+
+// Wrapped functions
+#include "wrapped/wrapped_engine.h"
+#include "wrapped/wrapped_image.h"
+#include "wrapped/wrapped_render.h"
 
 #define REGISTER_WRAP(name, func) \
     lua_pushstring(g_State, name);    \
@@ -16,11 +20,6 @@
     lua_settable(g_State, -3);
 
 static lua_State *g_State = NULL;
-
-void kvIntToStack(const char *key, const int value) {
-    lua_pushstring(g_State, key);
-    lua_pushnumber(g_State, (lua_Number)value);
-}
 
 int script_CallFunction(const char *functionName) {
     // Get the function from global
@@ -35,21 +34,23 @@ int script_CallFunction(const char *functionName) {
 
 void script_SetMouseUp() {
     // Get global table
-    lua_getglobal(g_State, "mouse");
+    lua_getglobal(g_State, "controls");
+    lua_getfield(g_State, -1, "mouse");
 
     // Push bool into stack and set as down
     lua_pushboolean(g_State, 0);
     lua_setfield(g_State, -2, "down");
 
-    // Pop table from stack
-    lua_pop(g_State, 1);
+    // Pop tables from stack
+    lua_pop(g_State, 2);
 }
 
 void script_HandleMouseDown(int x, int y) {
-    log_Debug("X:%d Y:%d", x, y);
+    log_Debug("MOUSE DOWN X:%d Y:%d", x, y);
 
     // Get global
-    lua_getglobal(g_State, "mouse");
+    lua_getglobal(g_State, "controls");
+    lua_getfield(g_State, -1, "mouse");
 
     // Push x to stack and set
     lua_pushinteger(g_State, (lua_Integer)x);
@@ -63,8 +64,8 @@ void script_HandleMouseDown(int x, int y) {
     lua_pushboolean(g_State, 1);
     lua_setfield(g_State, -2, "down");
 
-    // Pop mouse table from stack
-    lua_pop(g_State, 1);
+    // Pop controls table and mouse table from stack
+    lua_pop(g_State, 2);
 }
 
 void script_SetGlobalPath(const char *path) {
@@ -72,6 +73,62 @@ void script_SetGlobalPath(const char *path) {
     lua_pushstring(g_State, path);
     lua_setfield(g_State, -2, "path");
     lua_pop(g_State, 1);
+}
+
+void script_WrapEngine() {
+    lua_createtable(g_State, 0, 3);
+    REGISTER_WRAP("freeSurface", wrapped_EngineFreeSurface);
+    REGISTER_WRAP("getScene", wrapped_EngineGetScene);
+    REGISTER_WRAP("setScene", wrapped_EngineSetScene);
+    lua_setglobal(g_State, "engine");
+}
+
+void script_WrapImage() {
+    lua_createtable(g_State, 0, 1);
+    REGISTER_WRAP("load", wrapped_ImageLoad);
+    lua_setglobal(g_State, "image");
+}
+
+void script_WrapRender() {
+    lua_createtable(g_State, 0, 6);
+    REGISTER_WRAP("showSurface", wrapped_RendererShowSurface);
+    REGISTER_WRAP("drawLine", wrapped_RenderDrawLine);
+    REGISTER_WRAP("drawFillRect", wrapped_RenderDrawFillRect);
+    REGISTER_WRAP("drawRect", wrapped_RenderDrawRect);
+    REGISTER_WRAP("setDrawColor", wrapped_RenderSetDrawColor);
+    REGISTER_WRAP("clear", wrapped_RenderClear);
+    lua_setglobal(g_State, "render");
+}
+
+void script_WrapControls() {
+    // Create controls table
+    lua_createtable(g_State, 0, 1);
+    
+    // Mouse table
+    lua_pushstring(g_State, "mouse");
+    lua_createtable(g_State, 0, 3);
+
+    lua_pushstring(g_State, "down");
+    lua_pushboolean(g_State, 0);
+    lua_settable(g_State, -3);
+
+    lua_pushstring(g_State, "x");
+    lua_pushnumber(g_State, (lua_Number)0);
+    lua_settable(g_State, -3);
+
+    lua_pushstring(g_State, "y");
+    lua_pushnumber(g_State, (lua_Number)0);
+    lua_settable(g_State, -3);
+
+    lua_settable(g_State, -3);
+    lua_setglobal(g_State, "controls");
+}
+
+void script_LoadWrapped() {
+    script_WrapEngine();
+    script_WrapImage();
+    script_WrapRender();
+    script_WrapControls();
 }
 
 int script_Init(EngineConfig *config) {
@@ -91,56 +148,32 @@ int script_Init(EngineConfig *config) {
     status = luaL_loadstring(g_State, config->script);
     script_SetGlobalPath(config->scriptDir);
 
+    // Load wrappers
+    script_LoadWrapped();
+
     //
     // GAME TABLE
     //
-    lua_createtable(g_State, 0, 2);
+    lua_createtable(g_State, 0, 1);
 
     // Create window table, 2 items, PUSH WINDOW STRING BEFORE TABLE TO STACK
     // [stack] <game table>, ["window", <window table>], <extra functions>
     lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
-    kvIntToStack("width", config->width);
+    lua_pushstring(g_State, "width");
+    lua_pushnumber(g_State, (lua_Number)config->width);
     lua_settable(g_State, -3);
 
-    kvIntToStack("height", config->height);
+    lua_pushstring(g_State, "height");
+    lua_pushnumber(g_State, (lua_Number)config->height);
     lua_settable(g_State, -3);
 
     // Append table to game table
     lua_settable(g_State, -3);
 
-    REGISTER_WRAP("setScene", wrapped_SetScene);
-    REGISTER_WRAP("getScene", wrapped_GetScene);
-    REGISTER_WRAP("drawRect", wrapped_DrawRect);
-    REGISTER_WRAP("drawFillRect", wrapped_DrawFillRect);
-    REGISTER_WRAP("setDrawLine", wrapped_DrawLine);
-    REGISTER_WRAP("SDL_Error", wrapped_SDLError);
-    REGISTER_WRAP("setDrawColor", wrapped_SetDrawColor);
-    REGISTER_WRAP("renderClear", wrapped_RenderClear);
-    REGISTER_WRAP("IMGLoad", wrapped_IMGLoad);
-    REGISTER_WRAP("freeSurface", wrapped_FreeSurface);
-    REGISTER_WRAP("showSurface", wrapped_ShowSurface);
-
     // Set as global
     lua_setglobal(g_State, "game");
-
-    //
-    // MOUSE TABLE
-    //
-    lua_createtable(g_State, 0, 3);
-    
-    lua_pushstring(g_State, "down");
-    lua_pushboolean(g_State, 0);
-    lua_settable(g_State, -3);
-
-    kvIntToStack("x", 0);
-    lua_settable(g_State, -3);
-
-    kvIntToStack("y", 0);
-    lua_settable(g_State, -3);
-
-    lua_setglobal(g_State, "mouse");
 
     // Run script
     if (lua_pcall(g_State, 0, 0, 0)) {
