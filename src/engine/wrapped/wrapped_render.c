@@ -5,17 +5,31 @@
 #include "wrapped_render.h"
 #include "../renderer.h"
 
-int wrapped_RendererShowTexture(lua_State *state) {
+int wrapped_RendererQueryTexture(lua_State *state) {
     int w, h;
     luaL_checkany(state, 1);
-    int x = luaL_checknumber(state, 2);
-    int y = luaL_checknumber(state, 3);
     SDL_Texture *texture = (SDL_Texture*)lua_touserdata(state, 1);
     if (texture == NULL) {
         lua_pushstring(state, "Failed to get texture");
         lua_error(state);
     }
     SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+    lua_pushinteger(state, (lua_Integer)w);
+    lua_pushinteger(state, (lua_Integer)h);
+    return 2;
+}
+
+int wrapped_RendererShowTexture(lua_State *state) {
+    luaL_checkany(state, 1);
+    int x = luaL_checknumber(state, 2);
+    int y = luaL_checknumber(state, 3);
+    int w = luaL_checknumber(state, 4);
+    int h = luaL_checknumber(state, 5);
+    SDL_Texture *texture = (SDL_Texture*)lua_touserdata(state, 1);
+    if (texture == NULL) {
+        lua_pushstring(state, "Failed to get texture");
+        lua_error(state);
+    }
     SDL_RenderCopy(renderer_GetRenderer(), texture, NULL, &(SDL_Rect){x, y, w, h});
     return 0;
 }

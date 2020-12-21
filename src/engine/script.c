@@ -116,13 +116,14 @@ void script_WrapImage() {
 }
 
 void script_WrapRender() {
-    lua_createtable(g_State, 0, 6);
+    lua_createtable(g_State, 0, 7);
     REGISTER_WRAP("showTexture", wrapped_RendererShowTexture);
     REGISTER_WRAP("drawLine", wrapped_RenderDrawLine);
     REGISTER_WRAP("drawFillRect", wrapped_RenderDrawFillRect);
     REGISTER_WRAP("drawRect", wrapped_RenderDrawRect);
     REGISTER_WRAP("setDrawColor", wrapped_RenderSetDrawColor);
     REGISTER_WRAP("clear", wrapped_RenderClear);
+    REGISTER_WRAP("queryTexture", wrapped_RendererQueryTexture);
     lua_setglobal(g_State, "render");
 }
 
