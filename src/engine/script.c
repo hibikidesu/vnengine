@@ -117,7 +117,7 @@ void script_WrapImage() {
 
 void script_WrapRender() {
     lua_createtable(g_State, 0, 6);
-    REGISTER_WRAP("showSurface", wrapped_RendererShowSurface);
+    REGISTER_WRAP("showTexture", wrapped_RendererShowTexture);
     REGISTER_WRAP("drawLine", wrapped_RenderDrawLine);
     REGISTER_WRAP("drawFillRect", wrapped_RenderDrawFillRect);
     REGISTER_WRAP("drawRect", wrapped_RenderDrawRect);

@@ -8,7 +8,12 @@ function main_loop()
 		print("Y", controls.mouse.y)
 	end
 	local w = window.width
-	print(w)
+	local h = window.height
+
+	render.setDrawColor(255, 255, 255, 255)
+	render.clear()
+
+	render.show
 end
 
 function shutdown() 

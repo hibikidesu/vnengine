@@ -5,13 +5,13 @@
 #include "wrapped_render.h"
 #include "../renderer.h"
 
-int wrapped_RendererShowSurface(lua_State *state) {
+int wrapped_RendererShowTexture(lua_State *state) {
     int w, h;
     int x = luaL_checknumber(state, 1);
     int y = luaL_checknumber(state, 2);
     SDL_Texture *texture = (SDL_Texture*)lua_touserdata(state, 1);
     if (texture == NULL) {
-        lua_pushstring(state, "Failed to create surface from texture");
+        lua_pushstring(state, "Failed to get texture");
         lua_error(state);
     }
     SDL_QueryTexture(texture, NULL, NULL, &w, &h);
