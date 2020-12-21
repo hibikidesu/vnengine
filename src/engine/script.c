@@ -75,6 +75,31 @@ void script_SetGlobalPath(const char *path) {
     lua_pop(g_State, 1);
 }
 
+void script_DumpStack() {
+    int i;
+    int top = lua_gettop(g_State);
+    log_Debug("Stack Dump:");
+    for (i = 1; i <= top; i++) {  /* repeat for each level */
+        int t = lua_type(g_State, i);
+        switch (t) {
+            case LUA_TSTRING:  /* strings */
+                printf("`%s'", lua_tostring(g_State, i));
+                break;
+            case LUA_TBOOLEAN:  /* booleans */
+                printf(lua_toboolean(g_State, i) ? "true" : "false");
+                break;
+            case LUA_TNUMBER:  /* numbers */
+                printf("%g", lua_tonumber(g_State, i));
+                break;
+            default:  /* other values */
+                printf("%s", lua_typename(g_State, t));
+                break;
+        }
+        printf("  ");  /* put a separator */
+    }
+    printf("\n");  /* end the listing */
+}
+
 void script_WrapEngine() {
     lua_createtable(g_State, 0, 3);
     REGISTER_WRAP("freeSurface", wrapped_EngineFreeSurface);
