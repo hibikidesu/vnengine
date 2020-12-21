@@ -109,8 +109,9 @@ void script_WrapEngine() {
 }
 
 void script_WrapImage() {
-    lua_createtable(g_State, 0, 1);
+    lua_createtable(g_State, 0, 2);
     REGISTER_WRAP("load", wrapped_ImageLoad);
+    REGISTER_WRAP("free", wrapped_ImageFree);
     lua_setglobal(g_State, "image");
 }
 
@@ -177,13 +178,8 @@ int script_Init(EngineConfig *config) {
     script_LoadWrapped();
 
     //
-    // GAME TABLE
+    // WINDOW TABLE
     //
-    lua_createtable(g_State, 0, 1);
-
-    // Create window table, 2 items, PUSH WINDOW STRING BEFORE TABLE TO STACK
-    // [stack] <game table>, ["window", <window table>], <extra functions>
-    lua_pushstring(g_State, "window");
     lua_createtable(g_State, 0, 2);
 
     lua_pushstring(g_State, "width");
@@ -194,11 +190,8 @@ int script_Init(EngineConfig *config) {
     lua_pushnumber(g_State, (lua_Number)config->height);
     lua_settable(g_State, -3);
 
-    // Append table to game table
-    lua_settable(g_State, -3);
-
     // Set as global
-    lua_setglobal(g_State, "game");
+    lua_setglobal(g_State, "window");
 
     // Run script
     if (lua_pcall(g_State, 0, 0, 0)) {

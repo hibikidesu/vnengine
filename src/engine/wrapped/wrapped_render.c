@@ -6,14 +6,16 @@
 #include "../renderer.h"
 
 int wrapped_RendererShowSurface(lua_State *state) {
-    SDL_Surface *surface = (SDL_Surface*)lua_touserdata(state, 1);
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer_GetRenderer(), surface);
+    int w, h;
+    int x = luaL_checknumber(state, 1);
+    int y = luaL_checknumber(state, 2);
+    SDL_Texture *texture = (SDL_Texture*)lua_touserdata(state, 1);
     if (texture == NULL) {
         lua_pushstring(state, "Failed to create surface from texture");
         lua_error(state);
     }
-    SDL_RenderCopy(renderer_GetRenderer(), texture, NULL, NULL);
-    SDL_DestroyTexture(texture);
+    SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+    SDL_RenderCopy(renderer_GetRenderer(), texture, NULL, &(SDL_Rect){x, y, w, h});
     return 0;
 }
 
