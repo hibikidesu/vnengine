@@ -12,7 +12,6 @@ A portable visual novel engine in pure c with scripts in lua
 ## Todo
 - lua c api functions
 - add same encryption keys from archive files to lua files
-- cleanup tables
 - write docs
 
 ## Done
