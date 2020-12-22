@@ -158,6 +158,31 @@ void script_LoadWrapped() {
     script_WrapControls();
 }
 
+void script_GetGlobalArray(char *name) {
+    lua_getglobal(g_State, name);
+
+    // Check if exists
+    if (lua_istable(g_State, -1) == 0) {
+        log_Error("Cant find global %s", name);
+        lua_pop(g_State, 1);
+        return;
+    }
+
+    lua_pushnil(g_State);
+    while (lua_next(g_State, 1) != 0) {
+        // lua_gettable(g_State, -1);
+        lua_getfield(g_State, -1, "type");
+        // script_DumpStack();
+        // printf("%s - %s\n", luaL_typename(g_State, -2), luaL_typename(g_State, -1));
+        const char *s = lua_tostring(g_State, -1);
+        // const char *item = luaL_checkstring(g_State, -1);
+        log_Debug("%s", s);
+        lua_pop(g_State, 2);
+    }
+
+    lua_pop(g_State, 1);
+}
+
 int script_Init(EngineConfig *config) {
     int status = 0;
 
@@ -199,6 +224,8 @@ int script_Init(EngineConfig *config) {
         log_Error("Failed to run main script: %s", lua_tostring(g_State, -1));
         return status;
     }
+
+    script_GetGlobalArray("title_layout");
 
     return 0;
 }

@@ -1,13 +1,10 @@
-require "menu"
+title_layout = {
+	{type="button"},
+	{type="button"}
+}
 
-function main_loop()
-	local scene = engine.getScene();
-	-- print(scene);
-	if scene == 0 then
-		menu_render();
-	end
-end
+-- function main_loop()
+-- end
 
-function shutdown() 
-	menu_shutdown();
-end
+-- function shutdown() 
+-- end
