@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "script.h"
 #include "../logger.h"
+#include "title_screen.h"
 
 static bool running = false;
 static SDL_Event event;
@@ -23,7 +24,15 @@ void engine_RenderFrame() {
     if (running == false) {
         return;
     }
-    script_CallFunction("main_loop");
+    
+    switch (engine_GetScene()) {
+        case SCENE_TITLE:
+            titleScreen_Render();
+            break;
+        default:
+            break;
+    }
+    
     renderer_Present();
     script_SetMouseUp();
 }
@@ -74,6 +83,11 @@ int engine_Init(EngineConfig *config) {
         return status;
     }
 
+    if ((status = titleScreen_Init())) {
+        log_Error("Failed to init title");
+        return status;
+    }
+
     return status;
 }
 
@@ -82,5 +96,6 @@ void engine_Free() {
     script_CallFunction("shutdown");
     IMG_Quit();
     script_Free();
+    titleScreen_Free();
     renderer_Free();
 }
