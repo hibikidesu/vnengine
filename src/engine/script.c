@@ -11,7 +11,6 @@
 
 // Wrapped functions
 #include "wrapped/wrapped_engine.h"
-#include "wrapped/wrapped_image.h"
 #include "wrapped/wrapped_render.h"
 
 #define REGISTER_WRAP(name, func) \
@@ -108,13 +107,6 @@ void script_WrapEngine() {
     lua_setglobal(g_State, "engine");
 }
 
-void script_WrapImage() {
-    lua_createtable(g_State, 0, 2);
-    REGISTER_WRAP("load", wrapped_ImageLoad);
-    REGISTER_WRAP("free", wrapped_ImageFree);
-    lua_setglobal(g_State, "image");
-}
-
 void script_WrapRender() {
     lua_createtable(g_State, 0, 7);
     REGISTER_WRAP("showTexture", wrapped_RendererShowTexture);
@@ -153,7 +145,6 @@ void script_WrapControls() {
 
 void script_LoadWrapped() {
     script_WrapEngine();
-    script_WrapImage();
     script_WrapRender();
     script_WrapControls();
 }
@@ -170,14 +161,11 @@ void script_GetGlobalArray(char *name) {
 
     lua_pushnil(g_State);
     while (lua_next(g_State, 1) != 0) {
-        // lua_gettable(g_State, -1);
         lua_getfield(g_State, -1, "type");
-        // script_DumpStack();
-        // printf("%s - %s\n", luaL_typename(g_State, -2), luaL_typename(g_State, -1));
         const char *s = lua_tostring(g_State, -1);
-        // const char *item = luaL_checkstring(g_State, -1);
-        log_Debug("%s", s);
-        lua_pop(g_State, 2);
+        lua_pop(g_State, 1);
+        log_Debug("type: %s", s);
+        lua_pop(g_State, 1);
     }
 
     lua_pop(g_State, 1);
